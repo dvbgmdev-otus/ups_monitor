@@ -1,0 +1,73 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Project: Build",
+            "type": "shell",
+            "command": "./prj",
+            "args": ["build"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Project: Clean",
+            "type": "shell",
+            "command": "./prj",
+            "args": ["clean"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Project: Run",
+            "type": "shell",
+            "command": "./prj",
+            "args": ["run"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Project: Test",
+            "type": "shell",
+            "command": "./prj",
+            "args": ["test"],
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "Project: Cppcheck",
+            "type": "shell",
+            "command": "./prj",
+            "args": ["cppcheck"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Project: Clang-Tidy light",
+            "type": "shell",
+            "command": "./prj",
+            "args": ["tidy", "--light"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Project: Clang-Tidy medium",
+            "type": "shell",
+            "command": "./prj",
+            "args": ["tidy", "--medium"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Project: Clang-Tidy strict",
+            "type": "shell",
+            "command": "./prj",
+            "args": ["tidy", "--strict"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Project: Coverage",
+            "type": "shell",
+            "command": "./prj",
+            "args": ["cov"],
+            "problemMatcher": []
+        }
+    ]
+}

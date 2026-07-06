@@ -1,0 +1,218 @@
+#!/bin/bash
+set -eEuo pipefail
+trap 'echo "[ERROR] ${BASH_SOURCE[0]}:${LINENO}: \"${BASH_COMMAND}\" failed" >&2' ERR
+
+# ---- Функция установки конфигурации ----
+set_config() {
+    DEBUG=0
+    [[ "${1-}" == "--debug" || "${1-}" == "-g" ]] && DEBUG=1
+
+    # ---- Функция вывода заголовков секций ----
+    log_section() {
+        local BLUE="\033[34m"
+        local CLEAR="\033[0m"
+        printf "%b===> %s%b\n" "$BLUE" "$*" "$CLEAR"
+    }
+
+    # ---- Список подавляемых предупреждений ----
+    SUPPRESS_PATTERNS=(
+        "Possible precedence problem"
+        "geninfo"
+    )
+
+    # ---- Список подавляемых двухстрочных сообщений ----
+    SUPPRESS_PAIRS=(
+        "stderr:|mocs_compilation.cpp.gcno:no functions found"
+    )
+
+    # ---- Функция фильтрации вывода ----
+    filter_output() {
+        if (( DEBUG == 1 )); then
+            cat
+            return
+        fi
+
+        local prev_line=""
+        local line
+        local pat
+        local first
+        local second
+        local skip
+
+        while IFS= read -r line; do
+            if [[ -n "$prev_line" ]]; then
+                skip=0
+
+                for pat in "${SUPPRESS_PAIRS[@]}"; do
+                    first="${pat%%|*}"
+                    second="${pat#*|}"
+
+                    if [[ "$prev_line" == *"$first"* && "$line" == *"$second"* ]]; then
+                        skip=1
+                        break
+                    fi
+                done
+
+                if (( skip == 1 )); then
+                    prev_line=""
+                    continue
+                fi
+
+                skip=0
+                for pat in "${SUPPRESS_PATTERNS[@]}"; do
+                    [[ "$prev_line" == *"$pat"* ]] && skip=1 && break
+                done
+
+                (( skip == 0 )) && echo "$prev_line"
+            fi
+
+            prev_line="$line"
+        done
+
+        if [[ -n "$prev_line" ]]; then
+            skip=0
+            for pat in "${SUPPRESS_PATTERNS[@]}"; do
+                [[ "$prev_line" == *"$pat"* ]] && skip=1 && break
+            done
+            (( skip == 0 )) && echo "$prev_line"
+        fi
+    }
+
+    COVERAGE_BASE_DIR="$(realpath "@COVERAGE_BASE_DIR@")"
+    BUILD_DIR="$(realpath "@CMAKE_BINARY_DIR@")"
+    cd "${BUILD_DIR}"
+}
+
+# ---- Helpers ----
+define_helpers() {
+    # ---- Запуск lcov ----
+    run_lcov() {
+        lcov --quiet "$@" 2>&1 | filter_output || true
+    }
+
+    # ---- Захват coverage ----
+    capture_coverage_data() {
+        local output_file="$1"
+        shift
+        run_lcov --capture \
+            "$@" \
+            --directory "${BUILD_DIR}" \
+            --base-directory "${COVERAGE_BASE_DIR}" \
+            --output-file "${output_file}" \
+            --ignore-errors mismatch,source,empty,gcov,inconsistent,unsupported,format \
+            --rc geninfo_unexecuted_blocks=1
+    }
+
+    # ---- Объединение coverage ----
+    merge_coverage_data() {
+        local output_file="$1"
+        shift
+        run_lcov "$@" \
+            --output-file "${output_file}" \
+            --ignore-errors mismatch,source,empty,gcov,inconsistent,unsupported,format
+    }
+}
+
+# ---- Сбор baseline-данных покрытия ----
+# baseline-данные нужны для того, чтобы учесть все строки кода, даже те, которые не были исполнены во время тестов
+capture_initial_coverage() {
+    log_section "Capturing initial coverage..."
+    capture_coverage_data coverage_base.info --initial
+}
+
+# ---- Запуск тестов ----
+run_tests() {
+    log_section "Running unit tests..."
+    ctest --output-on-failure
+}
+
+# ---- Сбор runtime-данных покрытия ----
+# runtime-данные нужны для того, чтобы узнать, какие строки кода были исполнены во время тестов
+capture_test_coverage() {
+    log_section "Capturing test coverage..."
+    capture_coverage_data coverage_test.info
+}
+
+# ---- Объединение baseline и runtime coverage ----
+# merge-данные нужны для того, чтобы объединить baseline и runtime coverage
+merge_coverage() {
+    log_section "Merging coverage data..."
+    merge_coverage_data coverage_raw.info -a coverage_base.info -a coverage_test.info
+}
+
+# ---- Сбор списка файлов проекта для покрытия ----
+collect_files() {
+    log_section "Collecting coverage file list..."
+    short_list=()
+    while IFS= read -r f; do
+        [[ -z "$f" ]] && continue
+        rel="$(realpath --relative-to="${COVERAGE_BASE_DIR}" "$f")"
+        short_list+=("$rel")
+    done < "@COVERAGE_LIST_FILE@"
+    # Показываем относительные пути
+    printf '  %s\n' "${short_list[@]}"
+}
+
+# ---- Извлечение и фильтрация данных покрытия ----
+filter_coverage() {
+    log_section "Filtering coverage..."
+
+    COVERAGE_PATTERNS=()
+
+    while IFS= read -r f; do
+        [[ -z "$f" ]] && continue
+        # f — абсолютный путь → делаем относительный к PROJECT_ROOT
+        rel="${f#"${COVERAGE_BASE_DIR}/"}"
+        COVERAGE_PATTERNS+=("${rel}")
+    done < "@COVERAGE_LIST_FILE@"
+
+    # Убираем дубликаты
+    mapfile -t COVERAGE_PATTERNS < <(printf "%s\n" "${COVERAGE_PATTERNS[@]}" | sort -u)
+
+    if (( ${#COVERAGE_PATTERNS[@]} == 0 )); then
+        echo "Coverage file list is empty"
+        exit 1
+    fi
+
+    run_lcov --extract coverage_raw.info \
+        "${COVERAGE_PATTERNS[@]}" \
+        --output-file coverage.info \
+        --ignore-errors unused,unused,mismatch
+}
+
+# ---- Генерация HTML отчета ----
+generate_html() {
+    log_section "Generating HTML report..."
+    genhtml coverage.info \
+        --output-directory out \
+        --source-directory "${COVERAGE_BASE_DIR}" \
+        --prefix "${COVERAGE_BASE_DIR}/" \
+        --flat \
+        --quiet
+}
+
+# ---- Открытие HTML отчета в браузере ----
+open_report() {
+    log_section "Opening coverage report..."
+    printf '  %s\n' "out/index.html"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        open out/index.html >/dev/null 2>&1 || true
+    else
+        xdg-open out/index.html >/dev/null 2>&1 || true
+    fi
+}
+
+main() {
+    set_config "$@"
+    define_helpers
+    capture_initial_coverage
+    run_tests
+    capture_test_coverage
+    merge_coverage
+    collect_files
+    filter_coverage
+    generate_html
+    open_report
+}
+
+main "$@"
