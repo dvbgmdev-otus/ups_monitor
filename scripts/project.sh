@@ -9,6 +9,10 @@
 #   ./scripts/project.sh build
 #   ./scripts/project.sh test
 #   ./scripts/project.sh run
+#   ./scripts/project.sh pack
+#   ./scripts/project.sh cov
+#   ./scripts/project.sh cppcheck
+#   ./scripts/project.sh tidy
 #   ./scripts/project.sh clean
 #   ./scripts/project.sh help
 #
@@ -29,6 +33,7 @@ Commands:
   build    Build project
   test     Run tests
   run      Run application
+  pack     Build DEB package
   cov      Run coverage report
   clean    Remove build artifacts
   cppcheck Run static analysis with Cppcheck
@@ -39,6 +44,7 @@ Examples:
   ./scripts/project.sh build
   ./scripts/project.sh test
   ./scripts/project.sh run
+  ./scripts/project.sh pack
   ./scripts/project.sh cov
   ./scripts/project.sh cppcheck
   ./scripts/project.sh tidy
@@ -61,6 +67,10 @@ main() {
         run)
             shift
             exec "$SCRIPT_DIR/run.sh" "$@"
+            ;;
+        pack)
+            shift
+            exec "$SCRIPT_DIR/pack.sh" "$@"
             ;;
         cppcheck)
             shift

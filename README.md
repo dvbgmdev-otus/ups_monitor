@@ -8,6 +8,7 @@
 ./prj build
 ./prj test
 ./prj run
+./prj pack
 ./prj cov
 ```
 
