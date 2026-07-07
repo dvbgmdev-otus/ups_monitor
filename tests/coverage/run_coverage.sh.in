@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eEuo pipefail
-trap 'echo "[ERROR] ${BASH_SOURCE[0]}:${LINENO}: \"${BASH_COMMAND}\" failed" >&2' ERR
+trap 'printf "\033[0;101m[ERROR] %s:%d: \"%s\" failed\033[0m\n" "${BASH_SOURCE[0]}" "${LINENO}" "${BASH_COMMAND}" >&2' ERR
 
 # ---- Функция установки конфигурации ----
 set_config() {
