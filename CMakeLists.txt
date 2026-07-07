@@ -2,9 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 if(1) # PROJECT CONFIG BLOCK
 
-    set(PATCH_VERSION "1" CACHE INTERNAL "Patch version")
-
-    project(ups_monitor VERSION 0.0.${PATCH_VERSION})
+    project(ups_monitor VERSION 0.1.0)
 
     # === Путь для модулей CMake ===
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -62,17 +60,10 @@ endif()
 
 if(1) # CPACK BLOCK
     set(CPACK_GENERATOR DEB)
-
     set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
-
-    set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
-    set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
-    set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
-
+    set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
     set(CPACK_PACKAGE_CONTACT "d.v.bogomaz@gmail.com")
-
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-
     include(CPack)
 endif()
 
