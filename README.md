@@ -20,3 +20,34 @@
 ./prj clean
 ./prj build
 ```
+
+## Версия проекта
+
+Версия проекта задаётся в одном месте:
+
+```cmake
+cmake/project_version.cmake
+```
+
+Перед релизом нужно вручную изменить значение:
+
+```cmake
+set(PROJECT_VERSION_VALUE 0.1.0)
+```
+
+Формат версии:
+
+```text
+MAJOR.MINOR.PATCH
+```
+
+Когда версия готова к релизу, на соответствующий commit ставится Git tag с тем же номером и префиксом `v`:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+Push релизного тега запускает GitHub Actions workflow для сборки пакета и создания GitHub Release.
+
+Release workflow проверяет, что версия из тега совпадает с версией из `cmake/project_version.cmake`. Если значения отличаются, релизная сборка завершается ошибкой.
