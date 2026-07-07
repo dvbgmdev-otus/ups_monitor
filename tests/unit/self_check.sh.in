@@ -2,11 +2,12 @@
 set -eEuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd -P)"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/../../scripts/lib/error_trap.sh"
+source "$PROJECT_ROOT/scripts/lib/error_trap.sh"
 setup_error_trap
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/../../scripts/lib/config.sh"
+source "$PROJECT_ROOT/scripts/lib/config.sh"
 # shellcheck disable=SC1091
 source "$LIB_DIR/logging.sh"
 

@@ -23,7 +23,6 @@ set(BIN_DIR "${CMAKE_BINARY_DIR}/bin")
 set(TEST_BIN_DIR "${BIN_DIR}/tests")
 message(STATUS "  Test binaries dir: ${TEST_BIN_DIR}")
 
-
 # --- Подключение GoogleTest ---
 include(FetchContent)
 
@@ -45,10 +44,30 @@ add_unit_test(empty_test SOURCES
     ${UNIT_TEST_DIR}/empty_test.cpp
 )
 
-add_test(
-    NAME self_check
-    COMMAND ${UNIT_TEST_DIR}/self_check.sh $<TARGET_FILE:${PROJECT_NAME}>
-)
+if(1) # SELF-CHECK TEST BLOCK
+    set(SELF_CHECK_SCRIPT_NAME "self_check.sh")
+    set(SELF_CHECK_SCRIPT_IN   "${UNIT_TEST_DIR}/${SELF_CHECK_SCRIPT_NAME}.in")
+    set(SELF_CHECK_SCRIPT      "${TEST_BIN_DIR}/${SELF_CHECK_SCRIPT_NAME}")
+
+    configure_file(
+        ${SELF_CHECK_SCRIPT_IN}
+        ${SELF_CHECK_SCRIPT}
+        @ONLY
+    )
+
+    file(CHMOD ${SELF_CHECK_SCRIPT}
+        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                    GROUP_READ GROUP_EXECUTE
+                    WORLD_READ WORLD_EXECUTE
+    )
+
+    add_test(
+        NAME self_check
+        COMMAND ${SELF_CHECK_SCRIPT} $<TARGET_FILE:${PROJECT_NAME}>
+    )
+
+    message(STATUS "  Self-check script generated: ${SELF_CHECK_SCRIPT}")
+endif()
 
 message(STATUS "  GoogleTest added")
 
