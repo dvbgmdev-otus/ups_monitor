@@ -63,7 +63,7 @@ if(1) # SELF-CHECK TEST BLOCK
 
     add_test(
         NAME self_check
-        COMMAND ${SELF_CHECK_SCRIPT} $<TARGET_FILE:${PROJECT_NAME}>
+        COMMAND ${SELF_CHECK_SCRIPT}
     )
 
     message(STATUS "  Self-check script generated: ${SELF_CHECK_SCRIPT}")

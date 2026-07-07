@@ -7,11 +7,10 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd -P)"
 source "$PROJECT_ROOT/scripts/lib/error_trap.sh"
 setup_error_trap
 # shellcheck disable=SC1091
-source "$PROJECT_ROOT/scripts/lib/config.sh"
-# shellcheck disable=SC1091
-source "$LIB_DIR/logging.sh"
+source "$PROJECT_ROOT/scripts/lib/build_artifacts.sh"
 
-BINARY="${1:-$BIN_DIR/ups_monitor}"
+get_binary_path
+BINARY="$PROJECT_BIN_PATH"
 
 check_output() {
     local name="$1"
