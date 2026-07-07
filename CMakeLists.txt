@@ -71,6 +71,8 @@ if(1) # CPACK BLOCK
 
     set(CPACK_PACKAGE_CONTACT "d.v.bogomaz@gmail.com")
 
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+
     include(CPack)
 endif()
 
