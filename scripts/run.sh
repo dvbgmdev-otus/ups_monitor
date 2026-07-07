@@ -25,69 +25,16 @@ source "$SCRIPT_DIR/lib/config.sh"
 source "$LIB_DIR/logging.sh"
 # shellcheck disable=SC1091
 source "$LIB_DIR/docker.sh"
-
-# Глобальная переменная для пути к бинарнику
-RUN_BIN_PATH=""
-
-get_binary_path() {
-    local project_name
-
-    if [[ ! -f "$PROJECT_BINARY_NAME_FILE" ]]; then
-        log_error "Binary name file not found: $PROJECT_BINARY_NAME_FILE" "$LOG_INDENT"
-        return 1
-    fi
-
-    project_name="$(tr -d '\n' < "$PROJECT_BINARY_NAME_FILE")"
-
-    if [[ -z "$project_name" ]]; then
-        log_error "Binary name file is empty: $PROJECT_BINARY_NAME_FILE" "$LOG_INDENT"
-        return 1
-    fi
-
-    readonly RUN_BIN_PATH="$BIN_DIR/$project_name"
-}
-
-ensure_binary_name_file() {
-    if [[ -f "$PROJECT_BINARY_NAME_FILE" ]]; then
-        return 0
-    fi
-
-    log_warn "Binary name file not found. Starting build" "$LOG_INDENT"
-    "$SHELL_DIR/build.sh"
-
-    if [[ ! -f "$PROJECT_BINARY_NAME_FILE" ]]; then
-        log_error "Binary name file was not produced: $PROJECT_BINARY_NAME_FILE" "$LOG_INDENT"
-        return 1
-    fi
-}
-
-ensure_build() {
-    ensure_binary_name_file || return 1
-    get_binary_path || return 1
-
-    if [[ -x "$RUN_BIN_PATH" ]]; then
-        log_info "Binary found: $RUN_BIN_PATH" "$LOG_INDENT"
-        return 0
-    fi
-
-    log_warn "Binary not found. Starting build" "$LOG_INDENT"
-    "$SHELL_DIR/build.sh"
-
-    if [[ ! -x "$RUN_BIN_PATH" ]]; then
-        log_error "Binary was not produced: $RUN_BIN_PATH" "$LOG_INDENT"
-        return 1
-    fi
-
-    log_ok "Binary is ready: $RUN_BIN_PATH" "$LOG_INDENT"
-}
+# shellcheck disable=SC1091
+source "$LIB_DIR/build_artifacts.sh"
 
 run_native() {
     log_stage "Run (native)"
     ensure_build || return 1
 
     log_info "Starting binary" "$LOG_INDENT"
-    log_debug "Running: $RUN_BIN_PATH $*" "$LOG_SUBINDENT"
-    "$RUN_BIN_PATH" "$@"
+    log_debug "Running: $PROJECT_BIN_PATH $*" "$LOG_SUBINDENT"
+    "$PROJECT_BIN_PATH" "$@"
 }
 
 main() {
