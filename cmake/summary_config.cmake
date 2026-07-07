@@ -6,6 +6,7 @@
 message(STATUS "")
 message(STATUS "===========================================")
 message(STATUS "  Project name:       ${PROJECT_NAME}")
+message(STATUS "  Project version:    ${PROJECT_VERSION}")
 
 if(DEFINED QT_VER_USED)
     message(STATUS "  Qt version used:    Qt${QT_VER_USED} (${QT_VERSION_STRING})")

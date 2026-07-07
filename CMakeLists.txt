@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.12)
 
 if(1) # PROJECT CONFIG BLOCK
-
-    project(ups_monitor VERSION 0.1.0)
-
     # === Путь для модулей CMake ===
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
     # === Путь до исходников ===
     set(SRC_DIR "${CMAKE_SOURCE_DIR}/src")
     # Корень покрываемых исходников
     set(COVERAGE_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+
+    include(project_version)
+    project(ups_monitor VERSION ${PROJECT_VERSION_VALUE})
 
     set(PROJECT_INCLUDE_DIR
         ${SRC_DIR}
