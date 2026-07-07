@@ -1,0 +1,3 @@
+[submodule "tests/ups_emulator"]
+	path = tests/ups_emulator
+	url = git@github.com:dbogomaz/ups_emulator.git
