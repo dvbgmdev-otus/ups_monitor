@@ -43,9 +43,6 @@ jobs:
 
           echo "package_version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Build Docker image
-        run: docker build -t otus_builder docker
-
       - name: Build
         run: ./prj build
 
