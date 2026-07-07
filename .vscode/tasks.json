@@ -35,6 +35,13 @@
             "problemMatcher": []
         },
         {
+            "label": "Project: Pack",
+            "type": "shell",
+            "command": "./prj",
+            "args": ["pack"],
+            "problemMatcher": []
+        },
+        {
             "label": "Project: Cppcheck",
             "type": "shell",
             "command": "./prj",
