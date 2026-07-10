@@ -11,6 +11,7 @@
 #   ./scripts/project.sh run
 #   ./scripts/project.sh pack
 #   ./scripts/project.sh cov
+#   ./scripts/project.sh build-emulator
 #   ./scripts/project.sh cppcheck
 #   ./scripts/project.sh tidy
 #   ./scripts/project.sh clean
@@ -32,15 +33,16 @@ Usage:
   ./scripts/project.sh <command> [args]
 
 Commands:
-  build    Build project
-  test     Run tests
-  run      Run application
-  pack     Build DEB package
-  cov      Run coverage report
-  clean    Remove build artifacts
-  cppcheck Run static analysis with Cppcheck
-  tidy     Run static analysis with clang-tidy
-  help     Show this help
+  build           Build project
+  test            Run tests
+  run             Run application
+  pack            Build DEB package
+  cov             Run coverage report
+  build-emulator  Build UPS emulator test runtime
+  clean           Remove build artifacts
+  cppcheck        Run static analysis with Cppcheck
+  tidy            Run static analysis with clang-tidy
+  help            Show this help
 
 Examples:
   ./scripts/project.sh build
@@ -48,6 +50,7 @@ Examples:
   ./scripts/project.sh run
   ./scripts/project.sh pack
   ./scripts/project.sh cov
+  ./scripts/project.sh build-emulator
   ./scripts/project.sh cppcheck
   ./scripts/project.sh tidy
   ./scripts/project.sh clean
@@ -86,6 +89,10 @@ main() {
         cov)
             shift
             exec "$SCRIPT_DIR/cov.sh" "$@"
+            ;;
+        build-emulator)
+            shift
+            exec "$SCRIPT_DIR/build_ups_emulator.sh" "$@"
             ;;
         clean)
             shift
