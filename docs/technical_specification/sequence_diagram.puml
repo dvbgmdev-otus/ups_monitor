@@ -26,7 +26,6 @@ activate Monitor
 
 entity "modelSpec : UpsModelSpec" as ModelSpec
 database "Спецификации моделей\nups_model_spec.ini" as ModelsDb
-control "UpsModelDetector\n<<static>>" as Detector
 
 == 3. Создание SNMP-клиента ==
 
@@ -41,51 +40,40 @@ note right of Monitor
     заданный константой приложения
 end note
 
-Monitor -> Detector: detect(client, modelsFilePath)
-activate Detector
-Detector -> ModelsDb: Прочитать список секций
-ModelsDb --> Detector: Имена секций моделей
+Monitor -> ModelsDb: Прочитать список секций
+ModelsDb --> Monitor: Имена секций моделей
 
 loop Пока модель не определена и есть секции
-    Detector -> ModelsDb: Прочитать спецификацию\nсекции sectionName
-    ModelsDb --> Detector: Спецификация модели
-    Detector -> Detector: Получить expectedName и\nnameOid из спецификации
-    Detector -> Snmp: get(nameOid)
+    Monitor -> ModelsDb: Прочитать спецификацию\nсекции sectionName
+    ModelsDb --> Monitor: Спецификация модели
+    Monitor -> Monitor: Получить expectedName и\nnameOid из спецификации
+    Monitor -> Snmp: get(nameOid)
     activate Snmp
     Snmp -> Ups: SNMP GET\nOID = nameOid
     activate Ups
     Ups --> Snmp: SNMP RESPONSE
     deactivate Ups
-    Snmp --> Detector: value или ошибка
+    Snmp --> Monitor: value или ошибка
     deactivate Snmp
 
     alt Получен строковый value
-        Detector -> Detector: Сравнить value с expectedName
+        Monitor -> Monitor: Сравнить value с expectedName
 
         alt value содержит expectedName
-            Detector -> Detector: detectedModel = sectionName
+            Monitor -> Monitor: detectedModel = sectionName
         else Имя модели не совпало
-            Detector -> Detector: Перейти к следующей секции
+            Monitor -> Monitor: Перейти к следующей секции
         end
     else Ошибка запроса или\nответ не является строкой
-        Detector -> Detector: Перейти к следующей секции
+        Monitor -> Monitor: Перейти к следующей секции
     end
 end
-
-alt Модель определена
-    Detector --> Monitor: detectedModel
-else Модель не определена
-    Detector --> Monitor: Ошибка определения модели
-end
-deactivate Detector
 
 break Модель не определена
     Monitor --> CLI: Исключение с причиной ошибки
     CLI --> User: Сообщение об ошибке в stderr
     CLI --> User: Завершение с кодом 1
 end
-
-Monitor -> Monitor: Сохранить detectedModel
 
 == 5. Загрузка спецификации модели ==
 
