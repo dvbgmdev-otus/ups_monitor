@@ -95,16 +95,18 @@ ModelSpec -> ModelsDb: Прочитать секцию\ndetectedModel
 ModelsDb --> ModelSpec: Данные секции
 ModelSpec -> ModelSpec: Разобрать и проверить\nданные спецификации
 
-alt Спецификация корректна
-    ModelSpec --> Monitor: true
-else Ошибка загрузки или валидации
-    ModelSpec --> Monitor: false
-end
+ModelSpec --> Monitor: Результат загрузки
 deactivate ModelSpec
 
-note right of ModelSpec
+break Спецификация не загружена
+    Monitor --> CLI: Исключение с причиной ошибки
+    CLI --> User: Сообщение об ошибке в stderr
+    CLI --> User: Завершение с кодом 1
+end
+
+note right of Monitor
     Следующий этап:
-    обработка ошибки load()
+    запуск периодического опроса
 end note
 
 deactivate CLI
