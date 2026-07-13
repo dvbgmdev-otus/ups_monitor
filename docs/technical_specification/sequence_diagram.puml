@@ -24,15 +24,16 @@ CLI -> Monitor: UpsMonitor()
 CLI -> Monitor: init(ip, port)
 activate Monitor
 
+database "Спецификации моделей\nups_model_spec.ini" as ModelsDb
+control "UpsModelDetector\n<<static>>" as Detector
+
 == 3. Создание SNMP-клиента ==
 
 create participant "client : SnmpClient" as Snmp
 Monitor -> Snmp: SnmpClient(ip, port)
+entity "ИБП / эмулятор ИБП\nSNMP-агент" as Ups
 
 == 4. Определение модели ИБП ==
-
-control "UpsModelDetector\n<<static>>" as Detector
-database "Спецификации моделей\nups_model_spec.ini" as ModelsDb
 
 note right of Monitor
     modelsFilePath — путь к ups_model_spec.ini,
@@ -50,6 +51,10 @@ loop Пока модель не определена и есть секции
     Detector -> Detector: Получить expectedName и nameOid\nиз спецификации
     Detector -> Snmp: get(nameOid)
     activate Snmp
+    Snmp -> Ups: SNMP GET\nOID = nameOid
+    activate Ups
+    Ups --> Snmp: SNMP RESPONSE
+    deactivate Ups
     Snmp --> Detector: value или ошибка
     deactivate Snmp
 
