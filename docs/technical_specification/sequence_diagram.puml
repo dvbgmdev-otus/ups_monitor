@@ -34,7 +34,7 @@ Monitor -> Snmp: SnmpClient(ip, port)
 control "UpsModelDetector\n<<static>>" as Detector
 database "Спецификации моделей\nups_model_spec.ini" as ModelsDb
 
-note over Monitor, ModelsDb
+note right of Monitor
     modelsFilePath — путь к ups_model_spec.ini,
     заданный константой приложения
 end note
@@ -44,9 +44,47 @@ activate Detector
 Detector -> ModelsDb: Прочитать список секций
 ModelsDb --> Detector: Имена секций моделей
 
+loop Пока модель не определена и есть секции
+    Detector -> ModelsDb: Прочитать спецификацию секции sectionName
+    ModelsDb --> Detector: Спецификация модели
+    Detector -> Detector: Получить expectedName и nameOid\nиз спецификации
+    Detector -> Snmp: get(nameOid)
+    activate Snmp
+    Snmp --> Detector: value или ошибка
+    deactivate Snmp
+
+    alt Получен строковый value
+        Detector -> Detector: Сравнить value с expectedName
+
+        alt value содержит expectedName
+            Detector -> Detector: detectedModel = sectionName
+        else Имя модели не совпало
+            Detector -> Detector: Перейти к следующей секции
+        end
+    else Ошибка запроса или ответ не является строкой
+        Detector -> Detector: Перейти к следующей секции
+    end
+end
+
+alt Модель определена
+    Detector --> Monitor: detectedModel
+else Модель не определена
+    Detector --> Monitor: Ошибка определения модели
+end
+deactivate Detector
+
+break Модель не определена
+    Monitor --> CLI: Исключение с причиной ошибки
+    deactivate Monitor
+    CLI --> User: Сообщение об ошибке в stderr
+    CLI --> User: Завершение с кодом 1
+end
+
+Monitor -> Monitor: Сохранить detectedModel
+
 note right of Detector
     Следующий этап:
-    перебор моделей
+    загрузка спецификации detectedModel
 end note
 
 deactivate CLI
