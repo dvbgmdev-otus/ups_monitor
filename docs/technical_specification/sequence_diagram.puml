@@ -149,4 +149,17 @@ else Получение состояния пользователем
     end
     deactivate CLI
 end
+
+== 8. Завершение приложения ==
+
+User -> CLI: Ctrl+C
+activate CLI
+CLI -> Monitor: stop()
+Monitor -> Monitor: Остановить фоновый опрос
+Monitor -> Monitor: Дождаться завершения\nрабочего потока
+Monitor --> CLI: Остановка завершена
+deactivate Monitor
+
+CLI --> User: Приложение завершено
+deactivate CLI
 @enduml
