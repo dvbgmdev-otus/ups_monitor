@@ -1,0 +1,53 @@
+@startuml ups_monitor_sequence
+title Запуск приложения мониторинга ИБП
+
+actor "Пользователь" as User
+boundary "CLI / main" as CLI
+
+== 1. Запуск и проверка аргументов ==
+
+User -> CLI: ups_monitor [~--ip <IPv4>] [~--port <номер>]
+activate CLI
+
+CLI -> CLI: Установить ip = 127.0.0.1, port = 161
+CLI -> CLI: Разобрать аргументы\nи проверить их формат
+
+break Аргументы некорректны
+    CLI --> User: Сообщение об ошибке в stderr
+    CLI --> User: Завершение с кодом 1
+end
+
+== 2. Инициализация монитора ==
+
+create control "monitor : UpsMonitor" as Monitor
+CLI -> Monitor: UpsMonitor()
+CLI -> Monitor: init(ip, port)
+activate Monitor
+
+== 3. Создание SNMP-клиента ==
+
+create participant "client : SnmpClient" as Snmp
+Monitor -> Snmp: SnmpClient(ip, port)
+
+== 4. Определение модели ИБП ==
+
+control "UpsModelDetector\n<<static>>" as Detector
+database "Спецификации моделей\nups_model_spec.ini" as ModelsDb
+
+note over Monitor, ModelsDb
+    modelsFilePath — путь к ups_model_spec.ini,
+    заданный константой приложения
+end note
+
+Monitor -> Detector: detect(client, modelsFilePath)
+activate Detector
+Detector -> ModelsDb: Прочитать список секций
+ModelsDb --> Detector: Имена секций моделей
+
+note right of Detector
+    Следующий этап:
+    перебор моделей
+end note
+
+deactivate CLI
+@enduml
