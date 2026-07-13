@@ -107,39 +107,46 @@ end note
 CLI --> User: Определена модель ИБП:\nmodelName
 CLI --> User: Мониторинг запущен
 
-deactivate CLI
-
 == 7. Периодический опрос ИБП ==
 
-loop Пока мониторинг запущен
-    loop Для каждого параметра
-        Monitor -> ModelSpec: Получить OID параметра
-        activate ModelSpec
-        ModelSpec --> Monitor: oid
-        deactivate ModelSpec
+par Фоновый опрос ИБП
+    loop Пока мониторинг запущен
+        loop Для каждого параметра
+            Monitor -> ModelSpec: Получить OID параметра
+            activate ModelSpec
+            ModelSpec --> Monitor: oid
+            deactivate ModelSpec
 
-        Monitor -> Snmp: get(oid)
-        activate Snmp
-        Snmp -> Ups: SNMP GET\nOID = oid
-        activate Ups
-        Ups --> Snmp: SNMP RESPONSE
-        deactivate Ups
-        Snmp --> Monitor: value или ошибка
-        deactivate Snmp
+            Monitor -> Snmp: get(oid)
+            activate Snmp
+            Snmp -> Ups: SNMP GET\nOID = oid
+            activate Ups
+            Ups --> Snmp: SNMP RESPONSE
+            deactivate Ups
+            Snmp --> Monitor: value или ошибка
+            deactivate Snmp
 
-        Monitor -> ModelSpec: Получить критерии оценки\nпараметра
-        activate ModelSpec
-        ModelSpec --> Monitor: Критерии оценки параметра
-        deactivate ModelSpec
+            Monitor -> ModelSpec: Получить критерии оценки\nпараметра
+            activate ModelSpec
+            ModelSpec --> Monitor: Критерии оценки параметра
+            deactivate ModelSpec
 
-        Monitor -> Monitor: Оценить параметр
+            Monitor -> Monitor: Оценить параметр
+        end
+
+        Monitor -> Monitor: Сформировать состояние ИБП\nи сохранить во внутренний\nпотокобезопасный буфер
+        Monitor -> Monitor: Ожидать до следующего опроса
     end
-
-    Monitor -> Monitor: Сформировать статус ИБП\nи описание причины
+else Получение состояния пользователем
+    loop Пока приложение запущено
+        CLI -> Monitor: Получить новое состояние
+        alt Новое состояние доступно
+            Monitor --> CLI: Состояние ИБП
+            CLI --> User: Статус ИБП и описание\nвыявленных отклонений
+        else Новых данных нет
+            Monitor --> CLI: Новых данных нет
+        end
+    end
+    deactivate CLI
 end
-
-note right of Monitor
-    Следующий этап:
-    вывод состояния и ожидание
-end note
 @enduml
