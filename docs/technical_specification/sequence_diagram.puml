@@ -104,9 +104,21 @@ break Спецификация не загружена
     CLI --> User: Завершение с кодом 1
 end
 
+== 6. Запуск мониторинга ==
+
+Monitor --> CLI: Инициализация завершена
+deactivate Monitor
+
+Monitor ->> Monitor: Запустить pollLoop()
+activate Monitor
 note right of Monitor
+    pollLoop() выполняется
+    в фоновом потоке
+end note
+
+note right of CLI
     Следующий этап:
-    запуск периодического опроса
+    сообщение пользователю
 end note
 
 deactivate CLI
