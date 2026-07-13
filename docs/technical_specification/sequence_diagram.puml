@@ -112,12 +112,12 @@ deactivate CLI
 == 7. Периодический опрос ИБП ==
 
 loop Пока мониторинг запущен
-    Monitor -> ModelSpec: Получить параметры\nи правила проверки
-    activate ModelSpec
-    ModelSpec --> Monitor: Параметры модели
-    deactivate ModelSpec
-
     loop Для каждого параметра
+        Monitor -> ModelSpec: Получить OID параметра
+        activate ModelSpec
+        ModelSpec --> Monitor: oid
+        deactivate ModelSpec
+
         Monitor -> Snmp: get(oid)
         activate Snmp
         Snmp -> Ups: SNMP GET\nOID = oid
@@ -126,9 +126,16 @@ loop Пока мониторинг запущен
         deactivate Ups
         Snmp --> Monitor: value или ошибка
         deactivate Snmp
+
+        Monitor -> ModelSpec: Получить критерии оценки\nпараметра
+        activate ModelSpec
+        ModelSpec --> Monitor: Критерии оценки параметра
+        deactivate ModelSpec
+
+        Monitor -> Monitor: Оценить параметр
     end
 
-    Monitor -> Monitor: Проанализировать ответы\nи сформировать состояние ИБП
+    Monitor -> Monitor: Сформировать статус ИБП\nи описание причины
 end
 
 note right of Monitor
