@@ -116,10 +116,8 @@ note right of Monitor
     в фоновом потоке
 end note
 
-note right of CLI
-    Следующий этап:
-    сообщение пользователю
-end note
+CLI --> User: Определена модель ИБП:\nmodelName
+CLI --> User: Мониторинг запущен
 
 deactivate CLI
 @enduml
