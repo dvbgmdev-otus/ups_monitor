@@ -80,7 +80,6 @@ deactivate Detector
 
 break Модель не определена
     Monitor --> CLI: Исключение с причиной ошибки
-    deactivate Monitor
     CLI --> User: Сообщение об ошибке в stderr
     CLI --> User: Завершение с кодом 1
 end
