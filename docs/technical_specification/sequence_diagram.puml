@@ -120,4 +120,31 @@ CLI --> User: Определена модель ИБП:\nmodelName
 CLI --> User: Мониторинг запущен
 
 deactivate CLI
+
+== 7. Периодический опрос ИБП ==
+
+loop Пока мониторинг запущен
+    Monitor -> ModelSpec: Получить параметры\nи правила проверки
+    activate ModelSpec
+    ModelSpec --> Monitor: Параметры модели
+    deactivate ModelSpec
+
+    loop Для каждого параметра
+        Monitor -> Snmp: get(oid)
+        activate Snmp
+        Snmp -> Ups: SNMP GET\nOID = oid
+        activate Ups
+        Ups --> Snmp: SNMP RESPONSE
+        deactivate Ups
+        Snmp --> Monitor: value или ошибка
+        deactivate Snmp
+    end
+
+    Monitor -> Monitor: Проанализировать ответы\nи сформировать состояние ИБП
+end
+
+note right of Monitor
+    Следующий этап:
+    вывод состояния и ожидание
+end note
 @enduml
