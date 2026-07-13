@@ -6,10 +6,10 @@ boundary "CLI / main" as CLI
 
 == 1. Запуск и проверка аргументов ==
 
-User -> CLI: ups_monitor [~--ip <IPv4>] [~--port <номер>]
+User -> CLI: ups_monitor [~--ip <IPv4>]\n[~--port <номер>]
 activate CLI
 
-CLI -> CLI: Установить ip = 127.0.0.1, port = 161
+CLI -> CLI: Установить значения по умолчанию:\nip = 127.0.0.1, port = 161
 CLI -> CLI: Разобрать аргументы\nи проверить их формат
 
 break Аргументы некорректны
@@ -46,9 +46,9 @@ Detector -> ModelsDb: Прочитать список секций
 ModelsDb --> Detector: Имена секций моделей
 
 loop Пока модель не определена и есть секции
-    Detector -> ModelsDb: Прочитать спецификацию секции sectionName
+    Detector -> ModelsDb: Прочитать спецификацию\nсекции sectionName
     ModelsDb --> Detector: Спецификация модели
-    Detector -> Detector: Получить expectedName и nameOid\nиз спецификации
+    Detector -> Detector: Получить expectedName и\nnameOid из спецификации
     Detector -> Snmp: get(nameOid)
     activate Snmp
     Snmp -> Ups: SNMP GET\nOID = nameOid
@@ -66,7 +66,7 @@ loop Пока модель не определена и есть секции
         else Имя модели не совпало
             Detector -> Detector: Перейти к следующей секции
         end
-    else Ошибка запроса или ответ не является строкой
+    else Ошибка запроса или\nответ не является строкой
         Detector -> Detector: Перейти к следующей секции
     end
 end
