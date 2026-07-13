@@ -24,6 +24,7 @@ CLI -> Monitor: UpsMonitor()
 CLI -> Monitor: init(ip, port)
 activate Monitor
 
+participant "modelSpec : UpsModelSpec" as ModelSpec
 database "Спецификации моделей\nups_model_spec.ini" as ModelsDb
 control "UpsModelDetector\n<<static>>" as Detector
 
@@ -86,9 +87,16 @@ end
 
 Monitor -> Monitor: Сохранить detectedModel
 
-note right of Detector
+== 5. Загрузка спецификации модели ==
+
+Monitor -> ModelSpec: load(modelsFilePath,\ndetectedModel)
+activate ModelSpec
+ModelSpec -> ModelsDb: Прочитать секцию\ndetectedModel
+ModelsDb --> ModelSpec: Данные секции
+
+note right of ModelSpec
     Следующий этап:
-    загрузка спецификации detectedModel
+    разбор и валидация спецификации
 end note
 
 deactivate CLI
