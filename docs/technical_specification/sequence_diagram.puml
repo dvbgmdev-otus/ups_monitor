@@ -31,7 +31,7 @@ control "UpsModelDetector\n<<static>>" as Detector
 
 create participant "client : SnmpClient" as Snmp
 Monitor -> Snmp: SnmpClient(ip, port)
-entity "ИБП / эмулятор ИБП\nSNMP-агент" as Ups
+entity "ИБП / эмулятор ИБП" as Ups
 
 == 4. Определение модели ИБП ==
 
