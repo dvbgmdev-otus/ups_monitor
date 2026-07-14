@@ -31,7 +31,7 @@ database "Спецификации моделей\nups_model_spec.ini" as Models
 
 create boundary "client : SnmpClient" as Snmp
 Monitor -> Snmp: SnmpClient(ip, port)
-entity "ИБП / эмулятор ИБП" as Ups
+entity "ИБП" as Ups
 
 == 4. Определение модели ИБП ==
 
