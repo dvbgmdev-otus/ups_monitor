@@ -1,5 +1,5 @@
 @startuml ups_monitor_sequence
-title Запуск приложения мониторинга ИБП
+title Работа приложения мониторинга ИБП
 
 actor "Пользователь" as User
 boundary "CLI / main" as CLI
