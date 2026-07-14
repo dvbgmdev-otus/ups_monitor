@@ -94,15 +94,14 @@ end
 
 == 6. Запуск мониторинга ==
 
-Monitor --> CLI: Инициализация завершена
-deactivate Monitor
+Monitor -> ModelSpec: Получить имя модели
+activate ModelSpec
+ModelSpec --> Monitor: modelName
+deactivate ModelSpec
 
 Monitor ->> Monitor: Запустить pollLoop()
-activate Monitor
-note right of Monitor
-    pollLoop() выполняется
-    в фоновом потоке
-end note
+Monitor --> CLI: Инициализация завершена\nmodelName
+deactivate Monitor
 
 CLI --> User: Определена модель ИБП:\nmodelName
 CLI --> User: Мониторинг запущен
@@ -110,6 +109,12 @@ CLI --> User: Мониторинг запущен
 == 7. Периодический опрос ИБП ==
 
 par Фоновый опрос ИБП
+    activate Monitor
+    note right of Monitor
+        pollLoop() выполняется
+        в фоновом потоке
+    end note
+
     loop Пока мониторинг запущен
         loop Для каждого параметра
             Monitor -> ModelSpec: Получить OID параметра
