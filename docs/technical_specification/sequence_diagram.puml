@@ -158,7 +158,7 @@ else Получение состояния и управление
     User -> CLI: Ctrl+C
     CLI -> Monitor: stop()
     Monitor -> Monitor: Остановить фоновый опрос
-    Monitor -> Monitor: Дождаться завершения\nрабочего потока
+    Monitor -> Monitor: Дождаться завершения\nфонового потока опроса
     Monitor --> CLI: Остановка завершена
 
 end
