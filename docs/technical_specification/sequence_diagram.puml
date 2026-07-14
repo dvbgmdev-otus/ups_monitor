@@ -142,8 +142,8 @@ par Фоновый опрос ИБП
         Monitor -> Monitor: Сформировать состояние ИБП\nи сохранить во внутренний\nпотокобезопасный буфер
         Monitor -> Monitor: Ожидать до следующего опроса
     end
-else Получение состояния пользователем
-    loop Пока приложение запущено
+else Получение состояния и управление
+    loop До получения запроса завершения
         CLI -> Monitor: Получить новое состояние
         alt Новое состояние доступно
             Monitor --> CLI: Состояние ИБП
@@ -152,17 +152,17 @@ else Получение состояния пользователем
             Monitor --> CLI: Новых данных нет
         end
     end
-    deactivate CLI
-end
 
 == 8. Завершение приложения ==
 
-User -> CLI: Ctrl+C
-activate CLI
-CLI -> Monitor: stop()
-Monitor -> Monitor: Остановить фоновый опрос
-Monitor -> Monitor: Дождаться завершения\nрабочего потока
-Monitor --> CLI: Остановка завершена
+    User -> CLI: Ctrl+C
+    CLI -> Monitor: stop()
+    Monitor -> Monitor: Остановить фоновый опрос
+    Monitor -> Monitor: Дождаться завершения\nрабочего потока
+    Monitor --> CLI: Остановка завершена
+
+end
+
 deactivate Monitor
 
 CLI --> User: Приложение завершено
