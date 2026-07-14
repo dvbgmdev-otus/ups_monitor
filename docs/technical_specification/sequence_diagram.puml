@@ -131,9 +131,9 @@ par Фоновый опрос ИБП
             Snmp --> Monitor: value или ошибка
             deactivate Snmp
 
-            Monitor -> ModelSpec: Получить критерии оценки\nпараметра
+            Monitor -> ModelSpec: Получить правила проверки\nпараметра
             activate ModelSpec
-            ModelSpec --> Monitor: Критерии оценки параметра
+            ModelSpec --> Monitor: Правила проверки параметра
             deactivate ModelSpec
 
             Monitor -> Monitor: Оценить параметр
