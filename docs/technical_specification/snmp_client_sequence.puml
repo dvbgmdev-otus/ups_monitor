@@ -1,0 +1,79 @@
+@startuml snmp_client_sequence
+title Работа SNMP-клиента
+
+participant "Пользователь SNMP-клиента" as User
+
+== 1. Создание SNMP-клиента ==
+
+create control "client : SnmpClient" as Client
+User -> Client: SnmpClient(host, port, community)
+activate Client
+Client -> Client: Сохранить параметры подключения
+deactivate Client
+
+== 2. Выполнение SNMP GET-запроса ==
+
+control "SnmpCodec" as Codec
+boundary "UDP-сокет" as Network
+
+User -> Client: get(oid)
+activate Client
+Client -> Client: openSocket()
+
+opt UDP-сокет ещё не открыт
+    Client -> Network: Создать UDP-сокет\nsocket(AF_INET, SOCK_DGRAM)
+    activate Network
+    Network --> Client: Дескриптор сокета
+    Client -> Network: Установить тайм-аут приёма\nsetsockopt(SO_RCVTIMEO, 2 с)
+end
+
+Client -> Client: Сформировать GET-запрос
+
+Client -> Codec: encodeGetRequest(request)
+activate Codec
+Codec -> Codec: Закодировать запрос в ASN.1 BER
+Codec --> Client: Пакет запроса
+deactivate Codec
+
+participant "ИБП" as UPS
+Client -> Network: Отправить пакет\nsendto(пакет, адрес ИБП)
+Network --> Client: Результат отправки
+
+Network -> UPS: SNMP GET-REQUEST
+activate UPS
+Client -> Client: Увеличить следующий request-id
+Client -> Network: Ожидать ответ до 2 с\nrecvfrom()
+
+UPS -> Network: SNMP GET-RESPONSE
+deactivate UPS
+Network --> Client: Пакет ответа
+
+Client -> Codec: decodeGetResponse(пакет, request-id)
+activate Codec
+Codec -> Codec: Декодировать и проверить ответ
+Codec --> Client: Значения OID
+deactivate Codec
+
+break Ошибка выполнения GET-запроса
+    Client --> User: false, описание ошибки
+end
+
+Client --> User: true, SnmpValue
+deactivate Client
+
+== 3. Уничтожение SNMP-клиента ==
+
+User -> Client: Завершение времени жизни клиента
+activate Client
+Client -> Client: closeSocket()
+
+opt UDP-сокет открыт
+    Client -> Network: Закрыть UDP-сокет\nclose()
+    deactivate Network
+    Client -> Client: Сбросить дескриптор сокета
+end
+
+deactivate Client
+destroy Client
+
+@enduml

@@ -1,0 +1,170 @@
+@startuml ups_monitor_sequence
+title Работа приложения мониторинга ИБП
+
+actor "Пользователь" as User
+boundary "CLI / main" as CLI
+
+== 1. Запуск и проверка аргументов ==
+
+User -> CLI: ups_monitor [~--ip <IPv4>]\n[~--port <номер>]
+activate CLI
+
+CLI -> CLI: Установить значения по умолчанию:\nip = 127.0.0.1, port = 161
+CLI -> CLI: Разобрать аргументы\nи проверить их формат
+
+break Аргументы некорректны
+    CLI --> User: Сообщение об ошибке в stderr
+    CLI --> User: Завершение с кодом 1
+end
+
+== 2. Инициализация монитора ==
+
+create control "monitor : UpsMonitor" as Monitor
+CLI -> Monitor: UpsMonitor()
+CLI -> Monitor: init(ip, port)
+activate Monitor
+
+entity "modelSpec : UpsModelSpec" as ModelSpec
+database "Спецификации моделей\nups_model_spec.ini" as ModelsDb
+
+== 3. Создание SNMP-клиента ==
+
+create boundary "client : SnmpClient" as Snmp
+Monitor -> Snmp: SnmpClient(ip, port)
+entity "ИБП" as Ups
+
+== 4. Определение модели ИБП ==
+
+note right of Monitor
+    modelsFilePath — путь к ups_model_spec.ini,
+    заданный константой приложения
+end note
+
+Monitor -> ModelsDb: Прочитать список секций
+ModelsDb --> Monitor: Имена секций моделей
+
+loop Пока модель не определена и есть секции
+    Monitor -> ModelsDb: Прочитать спецификацию\nсекции sectionName
+    ModelsDb --> Monitor: Спецификация модели
+    Monitor -> Monitor: Получить expectedName и\nnameOid из спецификации
+    Monitor -> Snmp: get(nameOid)
+    activate Snmp
+    Snmp -> Ups: SNMP GET\nOID = nameOid
+    activate Ups
+    Ups --> Snmp: SNMP RESPONSE
+    deactivate Ups
+    Snmp --> Monitor: value или ошибка
+    deactivate Snmp
+
+    alt Получен строковый value
+        Monitor -> Monitor: Сравнить value с expectedName
+
+        alt value содержит expectedName
+            Monitor -> Monitor: detectedModel = sectionName
+        else Имя модели не совпало
+            Monitor -> Monitor: Перейти к следующей секции
+        end
+    else Ошибка запроса или\nответ не является строкой
+        Monitor -> Monitor: Перейти к следующей секции
+    end
+end
+
+break Модель не определена
+    Monitor --> CLI: Исключение с причиной ошибки
+    CLI --> User: Сообщение об ошибке в stderr
+    CLI --> User: Завершение с кодом 1
+end
+
+== 5. Загрузка спецификации модели ==
+
+Monitor -> ModelSpec: load(modelsFilePath,\ndetectedModel)
+activate ModelSpec
+ModelSpec -> ModelsDb: Прочитать секцию\ndetectedModel
+ModelsDb --> ModelSpec: Данные секции
+ModelSpec -> ModelSpec: Разобрать и проверить\nданные спецификации
+
+ModelSpec --> Monitor: Результат загрузки
+deactivate ModelSpec
+
+break Спецификация не загружена
+    Monitor --> CLI: Исключение с причиной ошибки
+    CLI --> User: Сообщение об ошибке в stderr
+    CLI --> User: Завершение с кодом 1
+end
+
+== 6. Запуск мониторинга ==
+
+Monitor -> ModelSpec: Получить имя модели
+activate ModelSpec
+ModelSpec --> Monitor: modelName
+deactivate ModelSpec
+
+Monitor ->> Monitor: Запустить pollLoop()
+Monitor --> CLI: Инициализация завершена\nmodelName
+deactivate Monitor
+
+CLI --> User: Определена модель ИБП:\nmodelName
+CLI --> User: Мониторинг запущен
+
+== 7. Периодический опрос ИБП ==
+
+par Фоновый опрос ИБП
+    activate Monitor
+    note right of Monitor
+        pollLoop() выполняется
+        в фоновом потоке
+    end note
+
+    loop Пока мониторинг запущен
+        loop Для каждого параметра
+            Monitor -> ModelSpec: Получить OID параметра
+            activate ModelSpec
+            ModelSpec --> Monitor: oid
+            deactivate ModelSpec
+
+            Monitor -> Snmp: get(oid)
+            activate Snmp
+            Snmp -> Ups: SNMP GET\nOID = oid
+            activate Ups
+            Ups --> Snmp: SNMP RESPONSE
+            deactivate Ups
+            Snmp --> Monitor: value или ошибка
+            deactivate Snmp
+
+            Monitor -> ModelSpec: Получить правила проверки\nпараметра
+            activate ModelSpec
+            ModelSpec --> Monitor: Правила проверки параметра
+            deactivate ModelSpec
+
+            Monitor -> Monitor: Оценить параметр
+        end
+
+        Monitor -> Monitor: Сформировать состояние ИБП\nи сохранить во внутренний\nпотокобезопасный буфер
+        Monitor -> Monitor: Ожидать до следующего опроса
+    end
+else Получение состояния и управление
+    loop До получения запроса завершения
+        CLI -> Monitor: Получить новое состояние
+        alt Новое состояние доступно
+            Monitor --> CLI: Состояние ИБП
+            CLI --> User: Статус ИБП и описание\nвыявленных отклонений
+        else Новых данных нет
+            Monitor --> CLI: Новых данных нет
+        end
+    end
+
+== 8. Завершение приложения ==
+
+    User -> CLI: Ctrl+C
+    CLI -> Monitor: stop()
+    Monitor -> Monitor: Остановить фоновый опрос
+    Monitor -> Monitor: Дождаться завершения\nфонового потока опроса
+    Monitor --> CLI: Остановка завершена
+
+end
+
+deactivate Monitor
+
+CLI --> User: Приложение завершено
+deactivate CLI
+@enduml
