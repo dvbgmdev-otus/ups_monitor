@@ -44,6 +44,43 @@ add_unit_test(empty_test SOURCES
     ${UNIT_TEST_DIR}/empty_test.cpp
 )
 
+add_unit_test(snmp_ber_test
+    SOURCES
+        ${UNIT_TEST_DIR}/snmp/ber/encode_primitives_test.cpp
+        ${UNIT_TEST_DIR}/snmp/ber/integer_reader_test.cpp
+        ${UNIT_TEST_DIR}/snmp/ber/octet_string_reader_test.cpp
+        ${UNIT_TEST_DIR}/snmp/ber/oid_reader_test.cpp
+        ${UNIT_TEST_DIR}/snmp/ber/oid_test.cpp
+        ${UNIT_TEST_DIR}/snmp/ber/read_tag_and_length_test.cpp
+        ${UNIT_TEST_DIR}/snmp/ber/sequence_reader_test.cpp
+        ${UNIT_TEST_DIR}/snmp/ber/skip_value_test.cpp
+        ${UNIT_TEST_DIR}/snmp/ber/varbind_reader_test.cpp
+        ${UNIT_TEST_DIR}/snmp/ber/writer_test.cpp
+    LIBRARIES
+        ${SNMP_NAME}
+)
+
+add_unit_test(snmp_codec_test
+    SOURCES
+        ${UNIT_TEST_DIR}/snmp/codec/get_request_encode_test.cpp
+        ${UNIT_TEST_DIR}/snmp/codec/get_response_decode_errors_test.cpp
+        ${UNIT_TEST_DIR}/snmp/codec/get_response_decode_test.cpp
+    LIBRARIES
+        ${SNMP_NAME}
+)
+
+add_unit_test(snmp_client_test
+    SOURCES
+        ${UNIT_TEST_DIR}/snmp/client/open_socket_test.cpp
+    LIBRARIES
+        ${SNMP_NAME}
+)
+
+set_target_properties(snmp_client_test PROPERTIES
+    LINK_FLAGS
+        "-Wl,--wrap=socket -Wl,--wrap=setsockopt -Wl,--wrap=close -Wl,--wrap=sendto -Wl,--wrap=recvfrom"
+)
+
 if(1) # SELF-CHECK TEST BLOCK
     set(SELF_CHECK_SCRIPT_NAME "self_check.sh")
     set(SELF_CHECK_SCRIPT_IN   "${UNIT_TEST_DIR}/${SELF_CHECK_SCRIPT_NAME}.in")
