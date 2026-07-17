@@ -6,6 +6,7 @@
 
 #include <cerrno>
 #include <cstring>
+#include <memory>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -46,6 +47,8 @@ struct SocketWrapState {
     bool returnInvalidNullValue{ false };
     bool returnUnsupportedValueType{ false };
     bool returnEmptyResponse{ false };
+    bool returnValidResponse{ false };
+    bool returnTimeout{ false };
     int closeCalls{ 0 };
 };
 
@@ -67,7 +70,8 @@ bool usesFakeSocket() {
            wrapState().returnInvalidOidTag || wrapState().returnVarBindWithoutValue ||
            wrapState().returnInvalidIntegerValue || wrapState().returnInvalidStringValue ||
            wrapState().returnInvalidNullValue || wrapState().returnUnsupportedValueType ||
-           wrapState().returnEmptyResponse;
+           wrapState().returnEmptyResponse || wrapState().returnValidResponse ||
+           wrapState().returnTimeout;
 }
 
 ssize_t copyResponse(void* buf, size_t len, const uint8_t* response, size_t responseSize) {
@@ -195,6 +199,10 @@ ssize_t __wrap_sendto(int sockfd,
     if (wrapState().returnEmptyResponse && sockfd == FAKE_SOCKET_FD) {
         return static_cast<ssize_t>(len);
     }
+    if ((wrapState().returnValidResponse || wrapState().returnTimeout) &&
+        sockfd == FAKE_SOCKET_FD) {
+        return static_cast<ssize_t>(len);
+    }
 
     errno = EBADF;
     return -1;
@@ -209,6 +217,31 @@ ssize_t __wrap_recvfrom(int sockfd,
     (void)flags;
     (void)src_addr;
     (void)addrlen;
+
+    if (wrapState().returnTimeout && sockfd == FAKE_SOCKET_FD) {
+        errno = EAGAIN;
+        return -1;
+    }
+
+    if (wrapState().returnValidResponse && sockfd == FAKE_SOCKET_FD) {
+        // clang-format off
+        const uint8_t response[] = {
+            0x30, 0x21,                  // Message SEQUENCE, len = 33
+                0x02, 0x01, 0x01,        // version = v2c
+                0x04, 0x06, 'p','u','b','l','i','c',
+                0xA2, 0x14,              // GetResponse-PDU, len = 20
+                    0x02, 0x01, 0x01,    // request-id = 1
+                    0x02, 0x01, 0x00,    // error-status = 0
+                    0x02, 0x01, 0x00,    // error-index = 0
+                    0x30, 0x09,          // VarBindList, len = 9
+                        0x30, 0x07,      // VarBind, len = 7
+                            0x06, 0x02, 0x2B, 0x06, // OID = 1.3.6
+                            0x02, 0x01, 0x05        // INTEGER = 5
+        };
+        // clang-format on
+
+        return copyResponse(buf, len, response, sizeof(response));
+    }
 
     if (wrapState().returnInvalidResponse && sockfd == FAKE_SOCKET_FD) {
         const uint8_t response[] = {
@@ -594,6 +627,18 @@ TEST_F(SnmpClientOpenSocketTest, GetManyOids_WhenResponseDecodeFails_ReturnsDeco
     EXPECT_EQ(err, "Invalid tag: expected 0x30, got 0x31");
 }
 
+// Тест 2.3: recvfrom() завершился по тайм-ауту
+TEST_F(SnmpClientOpenSocketTest, GetManyOids_WhenReceiveTimesOut_ReturnsError) {
+    wrapState().returnTimeout = true;
+
+    snmp::SnmpClient client("127.0.0.1");
+    std::vector<snmp::codec::SnmpValue> values;
+    snmp::ErrorMessage err;
+
+    ASSERT_FALSE(client.get(std::vector<snmp::Oid>{ "1.3.6" }, values, &err));
+    EXPECT_EQ(err, "SNMP response timeout");
+}
+
 #endif
 
 #if 1  // Часть 3 — Ошибки декодирования версии SNMP
@@ -871,6 +916,20 @@ TEST_F(SnmpClientOpenSocketTest, GetSingleOid_WhenResponseContainsNoValues_Retur
 
     ASSERT_FALSE(client.get("1.3.6", value, &err));
     EXPECT_EQ(err, "SNMP response contains no values");
+}
+
+// Тест 11.2: успешный ответ возвращает значение и клиент удаляется через интерфейс
+TEST_F(SnmpClientOpenSocketTest, GetSingleOid_WhenResponseIsValid_ReturnsValue) {
+    wrapState().returnValidResponse = true;
+
+    std::unique_ptr<snmp::ISnmpClient> client(new snmp::SnmpClient("127.0.0.1"));
+    snmp::codec::SnmpValue value;
+    snmp::ErrorMessage err;
+
+    ASSERT_TRUE(client->get("1.3.6", value, &err)) << err;
+    EXPECT_EQ(value.oid, "1.3.6");
+    EXPECT_EQ(value.type, snmp::codec::SnmpValue::Type::Integer);
+    EXPECT_EQ(value.intValue, 5);
 }
 
 #endif
