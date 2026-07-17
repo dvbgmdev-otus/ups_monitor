@@ -16,6 +16,8 @@ if(1) # PROJECT CONFIG BLOCK
         ${SRC_DIR}/core
         ${SRC_DIR}/core/utils
         ${SRC_DIR}/main
+        ${SRC_DIR}/snmp
+        ${SRC_DIR}/snmp/ber
     )
 
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -31,7 +33,17 @@ endif()
 if(1) # COVERAGE CONFIG BLOCK
     set(COVERAGE_SRC
         ${SRC_DIR}/main/main.cpp
+        ${SRC_DIR}/snmp/ber/snmp_ber_reader.cpp
+        ${SRC_DIR}/snmp/ber/snmp_ber_utils.cpp
+        ${SRC_DIR}/snmp/ber/snmp_ber_writer.cpp
+        ${SRC_DIR}/snmp/snmp_client.cpp
+        ${SRC_DIR}/snmp/snmp_codec.cpp
     )
+endif()
+
+if(1) # SNMP LIBRARY BLOCK
+    set(SNMP_NAME ${PROJECT_NAME}_SNMP)
+    add_subdirectory(${SRC_DIR}/snmp ${CMAKE_BINARY_DIR}/snmp)
 endif()
 
 if(1) # CORE LIBRARY BLOCK
