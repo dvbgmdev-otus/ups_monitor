@@ -18,8 +18,11 @@ namespace snmp {
 
 using namespace codec;
 
-SnmpClient::SnmpClient(const std::string& host, uint16_t port, const std::string& community)
-    : m_community(community) {
+SnmpClient::SnmpClient(const std::string& host,
+                       uint16_t port,
+                       const std::string& community,
+                       SnmpVersion version)
+    : m_community(community), m_version(version) {
     std::memset(&m_addr, 0, sizeof(m_addr));
     m_addr.sin_family = AF_INET;
     m_addr.sin_port = htons(port);
@@ -92,6 +95,7 @@ bool SnmpClient::get(const std::vector<Oid>& oids,
 
     SnmpGetRequest getRequest;
     getRequest.requestId = requestId;
+    getRequest.version = m_version;
     getRequest.community = m_community;
     getRequest.oids = oids;
 
@@ -120,7 +124,7 @@ bool SnmpClient::get(const std::vector<Oid>& oids,
         return false;
     }
 
-    if (!SnmpCodec::decodeGetResponse(buffer, received, requestId, out, localErr)) {
+    if (!SnmpCodec::decodeGetResponse(buffer, received, requestId, m_version, out, localErr)) {
         if (err) *err = localErr;
         return false;
     }

@@ -35,10 +35,12 @@ public:
      * @param host IPv4-адрес SNMP-агента.
      * @param port UDP-порт SNMP-агента.
      * @param community SNMP community string.
+     * @param version Версия протокола SNMP.
      */
     explicit SnmpClient(const std::string& host,
                         uint16_t port = 161,
-                        const std::string& community = "public");
+                        const std::string& community = "public",
+                        codec::SnmpVersion version = codec::SnmpVersion::V_2C);
 
     /**
      * @brief Закрывает UDP-сокет клиента.
@@ -83,7 +85,8 @@ private:
     sockaddr_in m_addr;     ///< Адрес SNMP-агента.
 
     std::string m_community;  ///< SNMP community string.
-    int m_requestId{ 1 };     ///< Следующий идентификатор SNMP-запроса.
+    codec::SnmpVersion m_version;  ///< Версия протокола SNMP.
+    int m_requestId{ 1 };           ///< Следующий идентификатор SNMP-запроса.
 };
 
 }  // namespace snmp

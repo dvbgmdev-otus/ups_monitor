@@ -70,7 +70,32 @@ public:
                                   std::vector<SnmpValue>& out,
                                   ErrorMessage& err);
 
+    /**
+     * @brief Разбирает GET-response и проверяет версию протокола.
+     *
+     * @param data Входной буфер
+     * @param size Размер буфера
+     * @param expectedRequestId Ожидаемый идентификатор запроса.
+     * @param expectedVersion Ожидаемая версия протокола.
+     * @param out [out] Полученные значения.
+     * @param err [out] Текст ошибки
+     * @return true, если ответ успешно декодирован.
+     */
+    static bool decodeGetResponse(const uint8_t* data,
+                                  size_t size,
+                                  int expectedRequestId,
+                                  SnmpVersion expectedVersion,
+                                  std::vector<SnmpValue>& out,
+                                  ErrorMessage& err);
+
 private:
+    static bool decodeGetResponseImpl(const uint8_t* data,
+                                      size_t size,
+                                      int expectedRequestId,
+                                      const SnmpVersion* expectedVersion,
+                                      std::vector<SnmpValue>& out,
+                                      ErrorMessage& err);
+
     /**
      * @brief Кодирует один VarBind для GET-request (encode helper).
      *

@@ -74,6 +74,24 @@ bool SnmpCodec::decodeGetResponse(const uint8_t* data,
                                   int expectedRequestId,
                                   std::vector<SnmpValue>& out,
                                   ErrorMessage& err) {
+    return decodeGetResponseImpl(data, size, expectedRequestId, nullptr, out, err);
+}
+
+bool SnmpCodec::decodeGetResponse(const uint8_t* data,
+                                  size_t size,  // NOLINT(bugprone-easily-swappable-parameters)
+                                  int expectedRequestId,
+                                  SnmpVersion expectedVersion,
+                                  std::vector<SnmpValue>& out,
+                                  ErrorMessage& err) {
+    return decodeGetResponseImpl(data, size, expectedRequestId, &expectedVersion, out, err);
+}
+
+bool SnmpCodec::decodeGetResponseImpl(const uint8_t* data,
+                                      size_t size,  // NOLINT(bugprone-easily-swappable-parameters)
+                                      int expectedRequestId,
+                                      const SnmpVersion* expectedVersion,
+                                      std::vector<SnmpValue>& out,
+                                      ErrorMessage& err) {
     const uint8_t* p = data;
     const uint8_t* end = data + size;
     const uint8_t* msgEnd = nullptr;
@@ -97,6 +115,10 @@ bool SnmpCodec::decodeGetResponse(const uint8_t* data,
         default:
             err = "Unsupported SNMP version (expected v1 or v2c)";
             return false;
+    }
+    if (expectedVersion != nullptr && version != static_cast<int>(*expectedVersion)) {
+        err = "SNMP response version mismatch";
+        return false;
     }
 
     // 3. Community
