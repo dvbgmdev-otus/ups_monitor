@@ -15,7 +15,8 @@ protected:
     bool decode(const uint8_t* data, size_t size, int expectedRequestId = 1) {
         values.clear();
         err.clear();
-        return codec.decodeGetResponse(data, size, expectedRequestId, values, err);
+        return codec.decodeGetResponse(
+            data, size, expectedRequestId, snmp::codec::SnmpVersion::V_1, values, err);
     }
 
     bool decodeSingleApplicationInteger(uint8_t valueTag, uint8_t value) {

@@ -67,4 +67,18 @@ TEST_F(SnmpCodecEncodeGetRequestTest, EncodeTwoOids) {
     EXPECT_EQ(out[2], 0x02);  // INTEGER (version)
     EXPECT_EQ(out[5], 0x04);  // OCTET STRING (community)
 }
+
+// Тест 1.3: GET-request использует явно заданную версию SNMP v1
+TEST_F(SnmpCodecEncodeGetRequestTest, EncodeSnmpV1) {
+    SnmpGetRequest req;
+    req.version = SnmpVersion::V_1;
+    req.oids = { "1.3.6" };
+
+    encode(req);
+
+    ASSERT_GE(out.size(), 5u);
+    EXPECT_EQ(out[2], 0x02);  // INTEGER (version)
+    EXPECT_EQ(out[3], 0x01);  // length = 1
+    EXPECT_EQ(out[4], 0x00);  // version = v1
+}
 #endif

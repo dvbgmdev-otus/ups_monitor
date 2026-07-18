@@ -49,6 +49,8 @@ struct SocketWrapState {
     bool returnEmptyResponse{ false };
     bool returnValidResponse{ false };
     bool returnTimeout{ false };
+    int responseVersion{ 1 };
+    int sentVersion{ -1 };
     int closeCalls{ 0 };
 };
 
@@ -133,10 +135,16 @@ ssize_t __wrap_sendto(int sockfd,
                       int flags,
                       const struct sockaddr* dest_addr,
                       socklen_t addrlen) {
-    (void)buf;
     (void)flags;
     (void)dest_addr;
     (void)addrlen;
+
+    if (sockfd == FAKE_SOCKET_FD && len >= 5) {
+        const uint8_t* request = static_cast<const uint8_t*>(buf);
+        if (request[2] == 0x02 && request[3] == 0x01) {
+            wrapState().sentVersion = request[4];
+        }
+    }
 
     if (wrapState().failSend && sockfd == FAKE_SOCKET_FD) {
         errno = EIO;
@@ -225,7 +233,7 @@ ssize_t __wrap_recvfrom(int sockfd,
 
     if (wrapState().returnValidResponse && sockfd == FAKE_SOCKET_FD) {
         // clang-format off
-        const uint8_t response[] = {
+        uint8_t response[] = {
             0x30, 0x21,                  // Message SEQUENCE, len = 33
                 0x02, 0x01, 0x01,        // version = v2c
                 0x04, 0x06, 'p','u','b','l','i','c',
@@ -240,6 +248,7 @@ ssize_t __wrap_recvfrom(int sockfd,
         };
         // clang-format on
 
+        response[4] = static_cast<uint8_t>(wrapState().responseVersion);
         return copyResponse(buf, len, response, sizeof(response));
     }
 
@@ -641,9 +650,9 @@ TEST_F(SnmpClientOpenSocketTest, GetManyOids_WhenReceiveTimesOut_ReturnsError) {
 
 #endif
 
-#if 1  // Часть 3 — Ошибки декодирования версии SNMP
+#if 1  // Часть 3 — Ошибки формата версии SNMP
 // ============================================================
-// Часть 3 — Ошибки декодирования версии SNMP
+// Часть 3 — Ошибки формата версии SNMP
 // ============================================================
 
 // Тест 3.1: поле version имеет неверный BER-тег
@@ -930,6 +939,54 @@ TEST_F(SnmpClientOpenSocketTest, GetSingleOid_WhenResponseIsValid_ReturnsValue) 
     EXPECT_EQ(value.oid, "1.3.6");
     EXPECT_EQ(value.type, snmp::codec::SnmpValue::Type::Integer);
     EXPECT_EQ(value.intValue, 5);
+}
+
+#endif
+
+#if 1  // Часть 12 — Выбор и проверка версии SNMP
+// ============================================================
+// Часть 12 — Выбор и проверка версии SNMP
+// ============================================================
+
+// Тест 12.1: по умолчанию клиент использует SNMP v2c
+TEST_F(SnmpClientOpenSocketTest, GetSingleOid_ByDefault_UsesSnmpV2c) {
+    wrapState().returnValidResponse = true;
+
+    snmp::SnmpClient client("127.0.0.1");
+    snmp::codec::SnmpValue value;
+    snmp::ErrorMessage err;
+
+    ASSERT_TRUE(client.get("1.3.6", value, &err)) << err;
+    EXPECT_EQ(wrapState().sentVersion, 1);
+}
+
+// Тест 12.2: явно выбранная версия SNMP v1 используется в запросе и ответе
+TEST_F(SnmpClientOpenSocketTest, GetSingleOid_WhenSnmpV1Selected_UsesSnmpV1) {
+    wrapState().returnValidResponse = true;
+    wrapState().responseVersion = 0;
+
+    snmp::SnmpClient client(
+        "127.0.0.1", 161, "public", snmp::codec::SnmpVersion::V_1);
+    snmp::codec::SnmpValue value;
+    snmp::ErrorMessage err;
+
+    ASSERT_TRUE(client.get("1.3.6", value, &err)) << err;
+    EXPECT_EQ(wrapState().sentVersion, 0);
+    EXPECT_EQ(value.intValue, 5);
+}
+
+// Тест 12.3: ответ другой версии отклоняется
+TEST_F(SnmpClientOpenSocketTest, GetSingleOid_WhenResponseVersionDiffers_ReturnsError) {
+    wrapState().returnValidResponse = true;
+
+    snmp::SnmpClient client(
+        "127.0.0.1", 161, "public", snmp::codec::SnmpVersion::V_1);
+    snmp::codec::SnmpValue value;
+    snmp::ErrorMessage err;
+
+    ASSERT_FALSE(client.get("1.3.6", value, &err));
+    EXPECT_EQ(wrapState().sentVersion, 0);
+    EXPECT_EQ(err, "SNMP response version mismatch");
 }
 
 #endif
