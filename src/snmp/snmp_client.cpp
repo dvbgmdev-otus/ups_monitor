@@ -53,8 +53,7 @@ bool SnmpClient::openSocket(ErrorMessage& err) {
 
     if (::setsockopt(m_sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
         err = "Failed to set socket receive timeout";
-        ::close(m_sock);
-        m_sock = -1;
+        closeSocket();
         return false;
     }
 
