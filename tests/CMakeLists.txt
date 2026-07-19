@@ -81,6 +81,10 @@ set_target_properties(snmp_client_test PROPERTIES
         "-Wl,--wrap=socket -Wl,--wrap=setsockopt -Wl,--wrap=close -Wl,--wrap=sendto -Wl,--wrap=recvfrom"
 )
 
+if(BUILD_INTEGRATION_TESTS)
+    add_subdirectory(integration)
+endif()
+
 if(1) # SELF-CHECK TEST BLOCK
     set(SELF_CHECK_SCRIPT_NAME "self_check.sh")
     set(SELF_CHECK_SCRIPT_IN   "${UNIT_TEST_DIR}/${SELF_CHECK_SCRIPT_NAME}.in")
