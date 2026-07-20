@@ -8,6 +8,7 @@
 ./prj build
 ./prj utest
 ./prj itest
+./prj test
 ./prj run
 ./prj pack
 ./prj cov

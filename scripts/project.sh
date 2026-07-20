@@ -9,6 +9,7 @@
 #   ./scripts/project.sh build
 #   ./scripts/project.sh utest
 #   ./scripts/project.sh itest
+#   ./scripts/project.sh test
 #   ./scripts/project.sh run
 #   ./scripts/project.sh pack
 #   ./scripts/project.sh cov
@@ -37,6 +38,7 @@ Commands:
   build           Build project
   utest           Run unit tests
   itest           Run integration tests
+  test            Run all tests
   run             Run application
   pack            Build DEB package
   cov             Run coverage report
@@ -50,6 +52,7 @@ Examples:
   ./scripts/project.sh build
   ./scripts/project.sh utest
   ./scripts/project.sh itest
+  ./scripts/project.sh test
   ./scripts/project.sh run
   ./scripts/project.sh pack
   ./scripts/project.sh cov
@@ -75,6 +78,10 @@ main() {
         itest)
             shift
             exec "$SCRIPT_DIR/itest.sh" "$@"
+            ;;
+        test)
+            shift
+            exec "$SCRIPT_DIR/test.sh" "$@"
             ;;
         run)
             shift
