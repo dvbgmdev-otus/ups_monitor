@@ -26,6 +26,7 @@ else()
 endif()
 
 message(STATUS "  Build testing:      ${BUILD_TESTING}")
+message(STATUS "  Integration tests:  ${BUILD_INTEGRATION_TESTS}")
 message(STATUS "  Coverage enabled:   ${BUILD_COVERAGE}")
 message(STATUS "  Debug logs enabled: ${ENABLE_DEBUG_LOG}")
 
