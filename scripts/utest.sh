@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# test.sh — запуск unit-тестов с автосборкой при необходимости
+# utest.sh — запуск unit-тестов с автосборкой при необходимости
 #
 # Контракт:
 #   - Если скрипт выполняется внутри Docker → проверяет unit-конфигурацию и запускает тесты
@@ -9,7 +9,7 @@
 # Поведение:
 #   - Если unit-сборка отсутствует или имеет другую конфигурацию — запускает scripts/build.sh
 #   - После успешной сборки запускает тесты через ctest
-#   - Аргументы test.sh пробрасываются в ctest
+#   - Аргументы utest.sh пробрасываются в ctest
 #
 # Коды возврата:
 #   0 — все unit-тесты успешно пройдены
@@ -104,7 +104,7 @@ main() {
 
     log_stage "Unit test (Docker)"
     log_info "Running unit tests inside container" "$LOG_INDENT"
-    docker_run ./scripts/test.sh "$@"
+    docker_run ./scripts/utest.sh "$@"
 }
 
 main "$@"

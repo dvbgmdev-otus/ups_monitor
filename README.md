@@ -6,7 +6,7 @@
 
 ```bash
 ./prj build
-./prj test
+./prj utest
 ./prj run
 ./prj pack
 ./prj cov
