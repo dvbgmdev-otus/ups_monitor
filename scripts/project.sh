@@ -8,6 +8,7 @@
 # Использование:
 #   ./scripts/project.sh build
 #   ./scripts/project.sh utest
+#   ./scripts/project.sh itest
 #   ./scripts/project.sh run
 #   ./scripts/project.sh pack
 #   ./scripts/project.sh cov
@@ -35,6 +36,7 @@ Usage:
 Commands:
   build           Build project
   utest           Run unit tests
+  itest           Run integration tests
   run             Run application
   pack            Build DEB package
   cov             Run coverage report
@@ -47,6 +49,7 @@ Commands:
 Examples:
   ./scripts/project.sh build
   ./scripts/project.sh utest
+  ./scripts/project.sh itest
   ./scripts/project.sh run
   ./scripts/project.sh pack
   ./scripts/project.sh cov
@@ -68,6 +71,10 @@ main() {
         utest)
             shift
             exec "$SCRIPT_DIR/utest.sh" "$@"
+            ;;
+        itest)
+            shift
+            exec "$SCRIPT_DIR/itest.sh" "$@"
             ;;
         run)
             shift
