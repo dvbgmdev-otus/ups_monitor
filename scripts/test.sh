@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 #
-# test.sh — запуск тестов с автосборкой при необходимости
+# test.sh — запуск unit-тестов с автосборкой при необходимости
 #
 # Контракт:
-#   - Если скрипт выполняется внутри Docker → проверяет артефакты тестов и запускает их нативно
+#   - Если скрипт выполняется внутри Docker → проверяет unit-конфигурацию и запускает тесты
 #   - Если скрипт выполняется на хосте → запускает выполнение внутри Docker контейнера
 #
 # Поведение:
-#   - Если тестовые артефакты отсутствуют — запускает scripts/build.sh
+#   - Если unit-сборка отсутствует или имеет другую конфигурацию — запускает scripts/build.sh
 #   - После успешной сборки запускает тесты через ctest
 #   - Аргументы test.sh пробрасываются в ctest
 #
 # Коды возврата:
-#   0 — все тесты успешно пройдены
+#   0 — все unit-тесты успешно пройдены
 #   1 — ошибка сборки/запуска тестов
 
 set -eEuo pipefail
@@ -27,35 +27,73 @@ source "$SCRIPT_DIR/lib/config.sh"
 source "$LIB_DIR/logging.sh"
 # shellcheck disable=SC1091
 source "$LIB_DIR/docker.sh"
+# shellcheck disable=SC1091
+source "$LIB_DIR/cmake_cache.sh"
+
+UNIT_TEST_CMAKE_CONFIG=(
+    BUILD_TESTING BOOL ON
+    BUILD_COVERAGE BOOL OFF
+    BUILD_INTEGRATION_TESTS BOOL OFF
+)
+
+# Внутренний helper: запускает сборку с переданной CMake-конфигурацией.
+build_with_cmake_config() {
+    local build_args=()
+
+    while (( $# > 0 )); do
+        build_args+=("-D$1:$2=$3")
+        shift 3
+    done
+
+    "$SHELL_DIR/build.sh" "${build_args[@]}"
+}
+
+# Внутренний helper: проверяет конфигурацию unit-сборки и наличие тестов.
+unit_test_build_is_ready() {
+    local ctest_output
+    local cmake_cache_file="$BUILD_DIR/CMakeCache.txt"
+
+    cmake_cache_matches \
+        "$cmake_cache_file" \
+        "${UNIT_TEST_CMAKE_CONFIG[@]}" &&
+        ctest_output="$(ctest --test-dir "$BUILD_DIR" -N 2>/dev/null)" &&
+        grep -q "Total Tests: [1-9]" <<< "$ctest_output"
+}
 
 ensure_test_build() {
-    local ctest_output
-
-    if ctest_output="$(ctest --test-dir "$BUILD_DIR" -N 2>/dev/null)" &&
-       grep -q "Total Tests: [1-9]" <<< "$ctest_output"; then
-        log_info "Test artifacts found in: $BUILD_DIR" "$LOG_INDENT"
+    if unit_test_build_is_ready; then
+        log_info "Unit test artifacts found in: $BUILD_DIR" "$LOG_INDENT"
         return
     fi
 
-    log_warn "Test artifacts not found. Starting build" "$LOG_INDENT"
-    "$SHELL_DIR/build.sh"
+    log_warn "Unit test build is missing or has incompatible configuration" "$LOG_INDENT"
+    build_with_cmake_config "${UNIT_TEST_CMAKE_CONFIG[@]}"
 
-    if ! ctest_output="$(ctest --test-dir "$BUILD_DIR" -N 2>/dev/null)" ||
-       ! grep -q "Total Tests: [1-9]" <<< "$ctest_output"; then
-        log_error "CTest did not detect any tests in: $BUILD_DIR" "$LOG_INDENT"
+    if ! unit_test_build_is_ready; then
+        log_error "Unit test artifacts were not produced in: $BUILD_DIR" "$LOG_INDENT"
         return 1
     fi
 
-    log_ok "Test artifacts are ready" "$LOG_INDENT"
+    log_ok "Unit test artifacts are ready" "$LOG_INDENT"
 }
 
 run_native() {
-    log_stage "Test (native)"
+    local ctest_command=(
+        ctest
+        --test-dir "$BUILD_DIR"
+        --progress
+        --output-on-failure
+        "$@"
+    )
+    local command_text
+
+    log_stage "Unit test (native)"
     ensure_test_build
 
-    log_info "Running tests" "$LOG_INDENT"
-    log_debug "Running: ctest --test-dir \"$BUILD_DIR\" --output-on-failure $*" "$LOG_SUBINDENT"
-    ctest --test-dir "$BUILD_DIR" --output-on-failure "$@"
+    log_info "Running unit tests" "$LOG_INDENT"
+    printf -v command_text '%q ' "${ctest_command[@]}"
+    log_debug "Running: $command_text" "$LOG_SUBINDENT"
+    "${ctest_command[@]}"
 }
 
 main() {
@@ -64,8 +102,8 @@ main() {
         return
     fi
 
-    log_stage "Test (Docker)"
-    log_info "Running tests inside container" "$LOG_INDENT"
+    log_stage "Unit test (Docker)"
+    log_info "Running unit tests inside container" "$LOG_INDENT"
     docker_run ./scripts/test.sh "$@"
 }
 
