@@ -44,6 +44,13 @@ add_unit_test(empty_test SOURCES
     ${UNIT_TEST_DIR}/empty_test.cpp
 )
 
+add_unit_test(fs_utils_test
+    SOURCES
+        ${UNIT_TEST_DIR}/utils/fs_utils_test.cpp
+    LIBRARIES
+        ${UTILS_NAME}
+)
+
 add_unit_test(snmp_ber_test
     SOURCES
         ${UNIT_TEST_DIR}/snmp/ber/encode_primitives_test.cpp
