@@ -12,10 +12,6 @@ set(${CORE_SRC}
 if(${CORE_SRC})
     add_library(${CORE_NAME} ${${CORE_SRC}})
 
-    set_target_properties(${CORE_NAME} PROPERTIES
-        POSITION_INDEPENDENT_CODE ON
-    )
-
     target_include_directories(${CORE_NAME} PUBLIC
         ${PROJECT_INCLUDE_DIR}
     )
