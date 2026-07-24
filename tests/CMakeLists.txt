@@ -65,6 +65,13 @@ add_unit_test(string_utils_test
         ${UTILS_NAME}
 )
 
+add_unit_test(ups_model_types_test
+    SOURCES
+        ${UNIT_TEST_DIR}/ups/ups_model_types_test.cpp
+    LIBRARIES
+        ${CORE_NAME}
+)
+
 add_unit_test(snmp_ber_test
     SOURCES
         ${UNIT_TEST_DIR}/snmp/ber/encode_primitives_test.cpp
