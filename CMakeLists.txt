@@ -14,6 +14,7 @@ if(1) # PROJECT CONFIG BLOCK
     set(PROJECT_INCLUDE_DIR
         ${SRC_DIR}
         ${SRC_DIR}/core
+        ${SRC_DIR}/core/ups
         ${SRC_DIR}/main
         ${SRC_DIR}/snmp
         ${SRC_DIR}/snmp/ber
@@ -33,6 +34,7 @@ endif()
 if(1) # COVERAGE CONFIG BLOCK
     set(COVERAGE_SRC
         ${SRC_DIR}/main/main.cpp
+        ${SRC_DIR}/core/ups/ups_model_types.cpp
         ${SRC_DIR}/snmp/ber/snmp_ber_reader.cpp
         ${SRC_DIR}/snmp/ber/snmp_ber_utils.cpp
         ${SRC_DIR}/snmp/ber/snmp_ber_writer.cpp
