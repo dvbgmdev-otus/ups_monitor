@@ -19,18 +19,18 @@ using ErrorMessage = std::string;    ///< Текст ошибки.
 using IniSectionName = std::string;  ///< Имя секции ini-файла.
 
 /**
- * @struct NormalSpec
+ * @struct NormalValueSpec
  * @brief Описание допустимых значений параметра.
  *
  * Может представлять:
  *  - диапазон значений (min..max)
  *  - набор перечислимых значений
  */
-struct NormalSpec {
-    bool isRange = false;             ///< true, если допустимые значения заданы диапазоном.
-    uint32_t min = 0;                 ///< Минимум диапазона при isRange == true.
-    uint32_t max = 0;                 ///< Максимум диапазона при isRange == true.
-    std::vector<uint32_t> values;     ///< Допустимые значения при isRange == false.
+struct NormalValueSpec {
+    bool isRange = false;          ///< true, если допустимые значения заданы диапазоном.
+    uint32_t min = 0;              ///< Минимум диапазона при isRange == true.
+    uint32_t max = 0;              ///< Максимум диапазона при isRange == true.
+    std::vector<uint32_t> values;  ///< Допустимые значения при isRange == false.
 };
 
 /**
@@ -40,18 +40,18 @@ struct NormalSpec {
 struct UpsParamSpec {
     ParamName name;                ///< Имя параметра, например inputVoltage или outputStatus.
     snmp::Oid oid;                 ///< SNMP OID параметра.
-    NormalSpec normal;             ///< Допустимые значения параметра.
+    NormalValueSpec normal;             ///< Допустимые значения параметра.
     std::vector<uint32_t> bypass;  ///< Значения, соответствующие режиму bypass.
 };
 
 /**
- * @enum UpsStateDesc
- * @brief Причины отклонений состояния UPS (битовое поле descr).
+ * @enum UpsDeviationFlags
+ * @brief Флаги отклонений состояния UPS.
  *
  * Каждый бит описывает конкретную причину ухудшения состояния UPS.
- * Значения используются для формирования диагностического поля descr.
+ * Значения используются для формирования битовой маски отклонений.
  */
-enum class UpsStateDesc : uint32_t {  // NOLINT(performance-enum-size)
+enum class UpsDeviationFlags : uint32_t {  // NOLINT(performance-enum-size)
     // clang-format off
     NONE           = 0x00000000,  ///< Нет отклонений, все параметры в норме.
     BATTERY_ALERT  = 0x00000001,  ///< Состояние батареи вне нормы.
@@ -70,7 +70,7 @@ enum class UpsStateDesc : uint32_t {  // NOLINT(performance-enum-size)
  * @param rhs Правая битовая маска.
  * @return Объединённая битовая маска.
  */
-UpsStateDesc operator|(UpsStateDesc lhs, UpsStateDesc rhs);
+UpsDeviationFlags operator|(UpsDeviationFlags lhs, UpsDeviationFlags rhs);
 
 /**
  * @brief Добавляет причины отклонений в битовую маску.
@@ -78,7 +78,7 @@ UpsStateDesc operator|(UpsStateDesc lhs, UpsStateDesc rhs);
  * @param rhs Добавляемая битовая маска.
  * @return Ссылка на изменённую битовую маску.
  */
-UpsStateDesc& operator|=(UpsStateDesc& lhs, UpsStateDesc rhs);
+UpsDeviationFlags& operator|=(UpsDeviationFlags& lhs, UpsDeviationFlags rhs);
 
 /**
  * @brief Вычисляет пересечение причин отклонений состояния UPS.
@@ -86,7 +86,7 @@ UpsStateDesc& operator|=(UpsStateDesc& lhs, UpsStateDesc rhs);
  * @param rhs Правая битовая маска.
  * @return Пересечение битовых масок.
  */
-UpsStateDesc operator&(UpsStateDesc lhs, UpsStateDesc rhs);
+UpsDeviationFlags operator&(UpsDeviationFlags lhs, UpsDeviationFlags rhs);
 
 /**
  * @brief Проверяет наличие причины отклонения в битовой маске.
@@ -94,25 +94,24 @@ UpsStateDesc operator&(UpsStateDesc lhs, UpsStateDesc rhs);
  * @param flag Проверяемая причина отклонения.
  * @return true, если причина присутствует в битовой маске.
  */
-bool hasFlag(UpsStateDesc value, UpsStateDesc flag);
+bool hasFlag(UpsDeviationFlags value, UpsDeviationFlags flag);
 
 /**
- * @brief Определяет, приводит ли причина отклонения состояния UPS к аварийному состоянию UPS.
+ * @brief Определяет, приводит ли флаг отклонения к аварийному состоянию UPS.
  *
- * @param desc Диагностическая причина
- * @return true, если причина аварийная (Failure)
- * @return false, если причина предупреждающая (Warning)
+ * @param flag Флаг отклонения.
+ * @return true, если отклонение аварийное (Failure).
+ * @return false, если отклонение предупреждающее (Warning).
  */
-bool isFailureCause(UpsStateDesc desc);
+bool isFailureCause(UpsDeviationFlags flag);
 
 /**
- * @brief Возвращает диагностическую причину (UpsStateDesc)
- *        для указанного параметра UPS.
+ * @brief Возвращает флаг отклонения для указанного параметра UPS.
  *
- * @param paramName Имя параметра (например: inputVoltage)
- * @return UpsStateDesc::NONE, если параметр не известен
+ * @param paramName Имя параметра (например: inputVoltage).
+ * @return Флаг отклонения или UpsDeviationFlags::NONE, если параметр неизвестен.
  */
-UpsStateDesc paramToDescMap(const ParamName& paramName);
+UpsDeviationFlags toDeviationFlag(const ParamName& paramName);
 
 /**
  * @enum UpsStatus
@@ -136,11 +135,11 @@ const char* toString(UpsStatus status);
  * @struct UpsState
  * @brief Состояние UPS на момент получения данных.
  *
- * Содержит агрегированное состояние и диагностические причины.
+ * Содержит агрегированное состояние и битовую маску отклонений.
  */
 struct UpsState {
-    UpsStatus status{ UpsStatus::NO_INFO };       ///< Агрегированное состояние UPS.
-    UpsStateDesc descr{ UpsStateDesc::NONE };     ///< Битовая маска причин отклонений.
+    UpsStatus status{ UpsStatus::NO_INFO };                   ///< Агрегированное состояние UPS.
+    UpsDeviationFlags deviations{ UpsDeviationFlags::NONE };  ///< Битовая маска отклонений.
 };
 
 }  // namespace ups
