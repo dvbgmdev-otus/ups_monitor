@@ -10,5 +10,10 @@
 
     "cmake.buildArgs": [
         "-j"
+    ],
+
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/src/**",
+        "${workspaceFolder}/build/_deps/googletest-src/googletest/include"
     ]
 }
