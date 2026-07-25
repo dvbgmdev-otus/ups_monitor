@@ -52,6 +52,22 @@ inputVoltage.normal = 200..240
 )");
     expectLoadFailure(ini, "TestUPS", "modelName");
 }
+
+// Тест 3.2: Метаданные модели доступны после успешной загрузки
+TEST_F(UpsModelSpecTest, Load_ValidMetadata_ReturnsModelNameAndOid) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+inputVoltage.oid = 1.2.3.4
+inputVoltage.normal = 200..240
+)");
+    expectLoadSuccess(ini, "TestUPS");
+
+    EXPECT_EQ(m_spec.modelName(), "Test UPS");
+    EXPECT_EQ(m_spec.modelNameOid(), "1.2.3");
+}
 #endif
 
 #if (1)  // Спецификация параметра
