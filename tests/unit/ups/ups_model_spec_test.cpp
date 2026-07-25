@@ -13,51 +13,16 @@
  */
 
 #include "ups_model_spec.h"
+#include "temp_ini_file.h"
 
 #include <gtest/gtest.h>
-#include <unistd.h>
 
-#include <cstdio>
-#include <cstdlib>
-#include <fstream>
-#include <stdexcept>
 #include <string>
-#include <vector>
 
 class UpsModelSpecTest : public ::testing::Test {
 protected:
     ups::UpsModelSpec m_spec;
-    std::vector<std::string> m_tempFiles;
-
-    std::string writeTempIni(const std::string& content) {
-        const char* tempDir = std::getenv("TMPDIR");
-        std::string pathTemplate = tempDir != nullptr && tempDir[0] != '\0' ? tempDir : "/tmp";
-        if (pathTemplate.back() != '/') pathTemplate += '/';
-        pathTemplate += "ups_monitor_model_spec_XXXXXX";
-
-        std::vector<char> pathBuffer(pathTemplate.begin(), pathTemplate.end());
-        pathBuffer.push_back('\0');
-
-        const int fileDescriptor = mkstemp(pathBuffer.data());
-        if (fileDescriptor == -1) {
-            throw std::runtime_error("Failed to create temporary INI file");
-        }
-
-        const std::string path(pathBuffer.data());
-        close(fileDescriptor);
-
-        std::ofstream out(path);
-        if (!out.good()) {
-            std::remove(path.c_str());
-            throw std::runtime_error("Failed to create temporary INI file: " + path);
-        }
-
-        out << content;
-        out.close();
-
-        m_tempFiles.push_back(path);
-        return path;
-    }
+    test::TempIniFileStorage m_tempIniFiles;
 
     // Проверяет, что загрузка завершилась ошибкой.
     void expectLoadFailure(const std::string& file,
@@ -77,12 +42,6 @@ protected:
         EXPECT_TRUE(ok) << m_spec.lastError();
         EXPECT_TRUE(m_spec.lastError().empty()) << m_spec.lastError();
     }
-
-    void TearDown() override {
-        for (const std::string& file : m_tempFiles) {
-            std::remove(file.c_str());
-        }
-    }
 };
 
 #if (1)  // Предварительные условия
@@ -97,7 +56,7 @@ TEST_F(UpsModelSpecTest, Load_FileNotFound_ReturnsError) {
 
 // Тест 2.1: Загрузка невозможна, если секция модели отсутствует
 TEST_F(UpsModelSpecTest, Load_SectionNotFound_ReturnsError) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 
@@ -112,7 +71,7 @@ inputVoltage.normal = 200..240
 
 // Тест 3.1: Загрузка невозможна, если в секции отсутствует modelName
 TEST_F(UpsModelSpecTest, Load_ModelNameMissing_ReturnsError) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 inputVoltage.oid = 1.2.3
 inputVoltage.normal = 200..240
@@ -125,7 +84,7 @@ inputVoltage.normal = 200..240
 
 // Тест 4.1: Загрузка невозможна, если у параметра отсутствует .oid
 TEST_F(UpsModelSpecTest, Load_ParamWithoutOid_ReturnsError) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 
@@ -139,7 +98,7 @@ inputVoltage.normal = 200..240
 
 // Тест 5.1: Загрузка невозможна, если у параметра отсутствует .normal
 TEST_F(UpsModelSpecTest, Load_ParamWithoutNormal_ReturnsError) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 
@@ -153,7 +112,7 @@ inputVoltage.oid = 1.2.3.4
 
 // Тест 6.1: Загрузка невозможна, если диапазон normal имеет некорректный формат
 TEST_F(UpsModelSpecTest, Load_NormalRangeInvalidSyntax_ReturnsError) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 
@@ -165,7 +124,7 @@ inputVoltage.normal = 200-240
 
 // Тест 6.2: Загрузка невозможна, если диапазон normal задан как min > max
 TEST_F(UpsModelSpecTest, Load_NormalRangeMinGreaterThanMax_ReturnsError) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 
@@ -177,7 +136,7 @@ inputVoltage.normal = 260..200
 
 // Тест 6.3: Загрузка невозможна, если normal содержит нечисловое значение
 TEST_F(UpsModelSpecTest, Load_NormalEnumContainsNonNumeric_ReturnsError) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 
@@ -189,7 +148,7 @@ outputStatus.normal = 2,ok,4
 
 // Тест 6.4: Корректный диапазон normal успешно загружается
 TEST_F(UpsModelSpecTest, Load_NormalRangeValid_Succeeds) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 
@@ -210,7 +169,7 @@ inputVoltage.normal = 200..259
 
 // Тест 6.5: Корректное перечисление normal успешно загружается
 TEST_F(UpsModelSpecTest, Load_NormalEnumValid_Succeeds) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 
@@ -236,7 +195,7 @@ outputStatus.normal = 2,4,6
 
 // Тест 7.1: Спецификация с несколькими параметрами успешно загружается
 TEST_F(UpsModelSpecTest, Load_MultipleParameters_Succeeds) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 
@@ -288,7 +247,7 @@ outputStatus.normal = 2,3
 
 // Тест 7.2: Повторяющееся имя параметра недопустимо
 TEST_F(UpsModelSpecTest, Load_DuplicateParameterName_ReturnsError) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 
@@ -307,7 +266,7 @@ inputVoltage.normal = 210..240
 
 // Тест 8.1: Спецификация без параметров недопустима
 TEST_F(UpsModelSpecTest, Load_ModelWithoutParameters_ReturnsError) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 )");
@@ -316,7 +275,7 @@ modelName = Test UPS
 
 // Тест 8.2: Спецификация с ровно одним параметром допустима
 TEST_F(UpsModelSpecTest, Load_ModelWithSingleParameter_Succeeds) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 
@@ -340,7 +299,7 @@ inputVoltage.normal = 200..259
 
 // Тест 9.1: bypass — корректный enum
 TEST_F(UpsModelSpecTest, Load_BypassEnumValid_Succeeds) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 
@@ -363,7 +322,7 @@ outputStatus.bypass = 6,9,10
 
 // Тест 9.2: bypass — одно значение (допустимо)
 TEST_F(UpsModelSpecTest, Load_BypassSingleValue_Succeeds) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 
@@ -383,7 +342,7 @@ outputStatus.bypass = 6
 
 // Тест 9.3: bypass содержит нечисловое значение - ошибка
 TEST_F(UpsModelSpecTest, Load_BypassInvalidNonNumeric_ReturnsError) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 
@@ -396,7 +355,7 @@ outputStatus.bypass = 6,abc
 
 // Тест 9.4: bypass отсутствует — это допустимо
 TEST_F(UpsModelSpecTest, Load_WithoutBypass_Succeeds) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
 

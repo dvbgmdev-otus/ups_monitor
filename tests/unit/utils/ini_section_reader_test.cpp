@@ -14,63 +14,22 @@
  */
 
 #include "ini_section_reader.h"
+#include "temp_ini_file.h"
 
 #include <gtest/gtest.h>
-#include <unistd.h>
 
-#include <cstdio>
-#include <cstdlib>
-#include <fstream>
-#include <stdexcept>
 #include <string>
-#include <vector>
 
 class IniSectionReaderTest : public ::testing::Test {
 protected:
-    std::vector<std::string> m_tempFiles;
-
-    std::string writeTempIni(const std::string& content) {
-        const char* tempDir = std::getenv("TMPDIR");
-        std::string pathTemplate = tempDir != nullptr && tempDir[0] != '\0' ? tempDir : "/tmp";
-        if (pathTemplate.back() != '/') pathTemplate += '/';
-        pathTemplate += "ups_monitor_ini_section_reader_XXXXXX";
-
-        std::vector<char> pathBuffer(pathTemplate.begin(), pathTemplate.end());
-        pathBuffer.push_back('\0');
-
-        const int fileDescriptor = mkstemp(pathBuffer.data());
-        if (fileDescriptor == -1) {
-            throw std::runtime_error("Failed to create temporary ini file");
-        }
-
-        const std::string path(pathBuffer.data());
-        close(fileDescriptor);
-
-        std::ofstream out(path);
-        if (!out.good()) {
-            std::remove(path.c_str());
-            throw std::runtime_error("Failed to create temp ini file: " + path);
-        }
-
-        out << content;
-        out.close();
-
-        m_tempFiles.push_back(path);
-        return path;
-    }
-
-    void TearDown() override {
-        for (const std::string& file : m_tempFiles) {
-            std::remove(file.c_str());
-        }
-    }
+    test::TempIniFileStorage m_tempIniFiles;
 };
 
 #if (1)  // Успешное чтение
 
 // Тест 1.1: Успешное чтение списка секций
 TEST_F(IniSectionReaderTest, Parse_ValidFile_ReturnsSections) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 # comment
 [SECTION_A]
 
@@ -100,7 +59,7 @@ TEST_F(IniSectionReaderTest, Parse_MissingFile_ReturnsError) {
 
 // Тест 3.1: Пустое имя секции []
 TEST_F(IniSectionReaderTest, Parse_EmptySectionName_ReturnsError) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 []
 )");
     utils::IniSectionReader reader(ini);
@@ -111,7 +70,7 @@ TEST_F(IniSectionReaderTest, Parse_EmptySectionName_ReturnsError) {
 
 // Тест 3.2: Дубликат имени секции
 TEST_F(IniSectionReaderTest, Parse_DuplicateSection_ReturnsError) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 [A]
 [A]
 )");
@@ -125,7 +84,7 @@ TEST_F(IniSectionReaderTest, Parse_DuplicateSection_ReturnsError) {
 
 // Тест 4.1: В файле нет ни одной секции
 TEST_F(IniSectionReaderTest, Parse_FileWithoutSections_ReturnsError) {
-    const std::string ini = writeTempIni(R"(
+    const std::string ini = m_tempIniFiles.write(R"(
 # only comments
 # and empty lines
 )");

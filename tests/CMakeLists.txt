@@ -48,9 +48,14 @@ add_unit_test(fs_utils_test
 
 add_unit_test(ini_section_reader_test
     SOURCES
+        ${UNIT_TEST_DIR}/temp_ini_file.cpp
         ${UNIT_TEST_DIR}/utils/ini_section_reader_test.cpp
     LIBRARIES
         ${UTILS_NAME}
+)
+
+target_include_directories(ini_section_reader_test PRIVATE
+    ${UNIT_TEST_DIR}
 )
 
 add_unit_test(string_utils_test
@@ -69,10 +74,15 @@ add_unit_test(ups_model_types_test
 
 add_unit_test(ups_model_spec_test
     SOURCES
+        ${UNIT_TEST_DIR}/temp_ini_file.cpp
         ${UNIT_TEST_DIR}/ups/ups_model_spec_parse_errors_test.cpp
         ${UNIT_TEST_DIR}/ups/ups_model_spec_test.cpp
     LIBRARIES
         ${CORE_NAME}
+)
+
+target_include_directories(ups_model_spec_test PRIVATE
+    ${UNIT_TEST_DIR}
 )
 
 add_unit_test(snmp_ber_test
