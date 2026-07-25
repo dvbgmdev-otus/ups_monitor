@@ -34,6 +34,7 @@ endif()
 if(1) # COVERAGE CONFIG BLOCK
     set(COVERAGE_SRC
         ${SRC_DIR}/main/main.cpp
+        ${SRC_DIR}/core/ups/ups_model_spec.cpp
         ${SRC_DIR}/core/ups/ups_model_types.cpp
         ${SRC_DIR}/snmp/ber/snmp_ber_reader.cpp
         ${SRC_DIR}/snmp/ber/snmp_ber_utils.cpp

@@ -6,6 +6,7 @@
 set(CORE_SRC ${CORE_NAME}_SRC)
 
 set(${CORE_SRC}
+    ups/ups_model_spec.cpp
     ups/ups_model_types.cpp
 )
 
@@ -14,6 +15,10 @@ if(${CORE_SRC})
 
     target_include_directories(${CORE_NAME} PUBLIC
         ${PROJECT_INCLUDE_DIR}
+    )
+
+    target_link_libraries(${CORE_NAME} PRIVATE
+        ${UTILS_NAME}
     )
 
     configure_compile_target(${CORE_NAME})
