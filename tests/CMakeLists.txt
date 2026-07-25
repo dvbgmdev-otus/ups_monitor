@@ -18,13 +18,6 @@ set(BIN_DIR "${CMAKE_BINARY_DIR}/bin")
 set(TEST_BIN_DIR "${BIN_DIR}/tests")
 message(STATUS "  Test binaries dir: ${TEST_BIN_DIR}")
 
-# --- Копирование тестовых данных ---
-file(COPY
-    "${CMAKE_SOURCE_DIR}/tests/data/"
-    DESTINATION "${TEST_BIN_DIR}/data"
-)
-message(STATUS "  Test data directory: ${TEST_BIN_DIR}/data")
-
 # --- Подключение GoogleTest ---
 include(FetchContent)
 
