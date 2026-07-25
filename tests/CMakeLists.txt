@@ -86,6 +86,8 @@ target_include_directories(ups_model_spec_test PRIVATE
     ${UNIT_TEST_DIR}
 )
 
+add_dependencies(ups_model_spec_test prepare_runtime_config)
+
 add_unit_test(snmp_ber_test
     SOURCES
         ${UNIT_TEST_DIR}/snmp/ber/encode_primitives_test.cpp
@@ -161,22 +163,3 @@ if (BUILD_COVERAGE)
 else()
     message(STATUS "  Coverage disabled")
 endif()
-
-# --- Копирование конфигурации для unit-тестов ---
-# add_custom_target(prepare_runtime_config ALL
-#     COMMAND ${CMAKE_COMMAND} -E make_directory
-#             "${BIN_DIR}/config"
-#
-#     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#             "${FPO_CONFIG_DIR}/ups_model_spec.ini"
-#             "${BIN_DIR}/config/ups_model_spec.ini"
-#
-#     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#             "${FPO_CONFIG_DIR}/config.ini"
-#             "${BIN_DIR}/config/config.ini"
-#
-#     COMMAND ${CMAKE_COMMAND} -E make_directory
-#             "${TEST_BIN_DIR}/log"
-#
-#     COMMENT "Prepare shared runtime config in ${BIN_DIR}/config"
-# )

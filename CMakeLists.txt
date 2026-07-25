@@ -75,13 +75,7 @@ if(1) # PROJECT METADATA BLOCK
 endif()
 
 if(1) # RUNTIME CONFIG BLOCK
-    set(RUNTIME_CONFIG_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/config")
-    file(MAKE_DIRECTORY "${RUNTIME_CONFIG_DIR}")
-    configure_file(
-        "${CMAKE_SOURCE_DIR}/config/ups_model_spec.ini"
-        "${RUNTIME_CONFIG_DIR}/ups_model_spec.ini"
-        COPYONLY
-    )
+    include(runtime_config)
 endif()
 
 if(1) # ACTIVATE BUILD TESTS BLOCK
@@ -101,4 +95,3 @@ if(1) # CPACK BLOCK
 endif()
 
 include(summary_config)
-#include(post_build)
