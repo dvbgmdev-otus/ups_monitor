@@ -10,30 +10,11 @@
  * Используются временные INI-файлы, создаваемые прямо в тестах.
  */
 
-#include "ups_model_spec.h"
-#include "temp_ini_file.h"
-
-#include <gtest/gtest.h>
+#include "ups_model_spec_test_base.h"
 
 #include <string>
 
-class UpsModelSpecParseErrorsTest : public ::testing::Test {
-protected:
-    ups::UpsModelSpec m_spec;
-    test::TempIniFileStorage m_tempIniFiles;
-
-    void expectLoadFailure(const std::string& ini,
-                           const std::string& section = "TEST",
-                           const std::string& expected = "") {
-        const bool ok = m_spec.load(ini, section);
-        EXPECT_FALSE(ok);
-        EXPECT_FALSE(m_spec.lastError().empty()) << "Error message must not be empty";
-        if (!expected.empty()) {
-            EXPECT_NE(m_spec.lastError().find(expected), std::string::npos)
-                << m_spec.lastError();
-        }
-    }
-};
+class UpsModelSpecParseErrorsTest : public UpsModelSpecTestBase {};
 
 #if (1)  // Пограничные случаи parseNormal
 
