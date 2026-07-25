@@ -76,6 +76,7 @@ add_unit_test(ups_model_spec_test
     SOURCES
         ${UNIT_TEST_DIR}/temp_ini_file.cpp
         ${UNIT_TEST_DIR}/ups/ups_model_spec_parse_errors_test.cpp
+        ${UNIT_TEST_DIR}/ups/ups_model_spec_real_ini_test.cpp
         ${UNIT_TEST_DIR}/ups/ups_model_spec_test.cpp
     LIBRARIES
         ${CORE_NAME}
