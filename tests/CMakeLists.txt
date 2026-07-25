@@ -13,15 +13,17 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/add_test.cmake)
 set(UNIT_TEST_DIR "${CMAKE_SOURCE_DIR}/tests/unit")
 message(STATUS "  Unit tests dir: ${UNIT_TEST_DIR}")
 
-# --- Папка для тестовых данных ---
-# set(TEST_DATA_DIR "${CMAKE_SOURCE_DIR}/tests/data")
-# add_compile_definitions(TEST_DATA_DIR=\"${TEST_DATA_DIR}\")
-# message(STATUS "  Test data directory: ${TEST_DATA_DIR}")
-
 # --- Папка для бинарников тестов ---
 set(BIN_DIR "${CMAKE_BINARY_DIR}/bin")
 set(TEST_BIN_DIR "${BIN_DIR}/tests")
 message(STATUS "  Test binaries dir: ${TEST_BIN_DIR}")
+
+# --- Копирование тестовых данных ---
+file(COPY
+    "${CMAKE_SOURCE_DIR}/tests/data/"
+    DESTINATION "${TEST_BIN_DIR}/data"
+)
+message(STATUS "  Test data directory: ${TEST_BIN_DIR}/data")
 
 # --- Подключение GoogleTest ---
 include(FetchContent)
@@ -68,6 +70,13 @@ add_unit_test(string_utils_test
 add_unit_test(ups_model_types_test
     SOURCES
         ${UNIT_TEST_DIR}/ups/ups_model_types_test.cpp
+    LIBRARIES
+        ${CORE_NAME}
+)
+
+add_unit_test(ups_model_spec_test
+    SOURCES
+        ${UNIT_TEST_DIR}/ups/ups_model_spec_test.cpp
     LIBRARIES
         ${CORE_NAME}
 )
