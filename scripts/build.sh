@@ -44,7 +44,7 @@ build_native() {
     run_cmake cmake -S "$PROJECT_ROOT" -B "$BUILD_DIR" "$@"
 
     log_info "Building project" "$LOG_INDENT"
-    run_cmake cmake --build "$BUILD_DIR"
+    run_cmake cmake --build "$BUILD_DIR" -- -j4
 
     log_ok "Build completed" "$LOG_INDENT"
 }
