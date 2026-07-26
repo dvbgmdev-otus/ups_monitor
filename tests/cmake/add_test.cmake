@@ -33,6 +33,10 @@ function(add_unit_test TEST_NAME)
         ${UNIT_TEST_SOURCES}
     )
 
+    target_include_directories(${TEST_NAME} PRIVATE
+        ${UNIT_TEST_DIR}
+    )
+
     target_link_libraries(${TEST_NAME} PRIVATE
         ${UNIT_TEST_LIBRARIES}
         GTest::gtest_main
