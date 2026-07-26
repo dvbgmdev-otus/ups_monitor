@@ -6,6 +6,7 @@
 set(CORE_SRC ${CORE_NAME}_SRC)
 
 set(${CORE_SRC}
+    ups/ups_model_detector.cpp
     ups/ups_model_spec.cpp
     ups/ups_model_types.cpp
 )
