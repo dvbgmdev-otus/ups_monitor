@@ -254,6 +254,11 @@ bool UpsModelSpec::validate() {
         return false;
     }
 
+    if (m_modelNameOid.empty()) {
+        m_lastError = "modelName.oid missing";
+        return false;
+    }
+
     if (m_parameters.empty()) {
         m_lastError = "no parameters defined";
         return false;

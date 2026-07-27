@@ -23,6 +23,7 @@ TEST_F(UpsModelSpecParseErrorsTest, ParseNormal_EmptyValue_ReturnsError) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TEST]
 modelName = TEST_UPS
+modelName.oid = 1.3.6.1.2.1.1.2.0
 param1.oid = 1.3.6.1.2.1.1.1
 param1.normal =
 )");
@@ -59,6 +60,7 @@ TEST_F(UpsModelSpecParseErrorsTest, ParseRange_NonNumeric_ReturnsError) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TEST]
 modelName = TEST_UPS
+modelName.oid = 1.3.6.1.2.1.1.2.0
 param1.oid = 1.3.6.1.2.1.1.1
 param1.normal = a..10
 )");
@@ -70,6 +72,7 @@ TEST_F(UpsModelSpecParseErrorsTest, ParseRange_NonNumericSuffix_ReturnsError) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TEST]
 modelName = TEST_UPS
+modelName.oid = 1.3.6.1.2.1.1.2.0
 param1.oid = 1.2.3
 param1.normal = 12a..34
 )");

@@ -91,7 +91,7 @@ TEST_F(UpsModelSpecTest, Load_ParamWithoutNormal_ReturnsError) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
-
+modelName.oid = 1.2.3
 inputVoltage.oid = 1.2.3.4
 )");
     expectLoadFailure(ini, "TestUPS", "normal");
@@ -105,7 +105,7 @@ TEST_F(UpsModelSpecTest, Load_NormalRangeInvalidSyntax_ReturnsError) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
-
+modelName.oid = 1.2.3
 inputVoltage.oid = 1.2.3.4
 inputVoltage.normal = 200-240
 )");
@@ -117,7 +117,7 @@ TEST_F(UpsModelSpecTest, Load_NormalRangeMinGreaterThanMax_ReturnsError) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
-
+modelName.oid = 1.2.3
 inputVoltage.oid = 1.2.3.4
 inputVoltage.normal = 260..200
 )");
@@ -129,7 +129,7 @@ TEST_F(UpsModelSpecTest, Load_NormalEnumContainsNonNumeric_ReturnsError) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
-
+modelName.oid = 1.2.3
 outputStatus.oid = 1.2.3.4
 outputStatus.normal = 2,ok,4
 )");
@@ -141,7 +141,7 @@ TEST_F(UpsModelSpecTest, Load_NormalRangeValid_Succeeds) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
-
+modelName.oid = 1.2.3
 inputVoltage.oid = 1.2.3.4
 inputVoltage.normal = 200..259
 )");
@@ -162,7 +162,7 @@ TEST_F(UpsModelSpecTest, Load_NormalEnumValid_Succeeds) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
-
+modelName.oid = 1.2.3
 outputStatus.oid = 1.2.3.4
 outputStatus.normal = 2,4,6
 )");
@@ -188,6 +188,7 @@ TEST_F(UpsModelSpecTest, Load_MultipleParameters_Succeeds) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
+modelName.oid = 1.2.3
 
 inputVoltage.oid = 1.2.3.1
 inputVoltage.normal = 200..259
@@ -259,6 +260,7 @@ TEST_F(UpsModelSpecTest, Load_ModelWithoutParameters_ReturnsError) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
+modelName.oid = 1.2.3
 )");
     expectLoadFailure(ini, "TestUPS", "no parameters");
 }
@@ -268,7 +270,7 @@ TEST_F(UpsModelSpecTest, Load_ModelWithSingleParameter_Succeeds) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
-
+modelName.oid = 1.2.3
 inputVoltage.oid = 1.2.3.4
 inputVoltage.normal = 200..259
 )");
@@ -292,7 +294,7 @@ TEST_F(UpsModelSpecTest, Load_BypassEnumValid_Succeeds) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
-
+modelName.oid = 1.2.3
 outputStatus.oid = 1.2.3.4
 outputStatus.normal = 1,2,3
 outputStatus.bypass = 6,9,10
@@ -315,7 +317,7 @@ TEST_F(UpsModelSpecTest, Load_BypassSingleValue_Succeeds) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
-
+modelName.oid = 1.2.3
 outputStatus.oid = 1.2.3.4
 outputStatus.normal = 1
 outputStatus.bypass = 6
@@ -348,7 +350,7 @@ TEST_F(UpsModelSpecTest, Load_WithoutBypass_Succeeds) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
-
+modelName.oid = 1.2.3
 outputStatus.oid = 1.2.3.4
 outputStatus.normal = 1,2
 )");
