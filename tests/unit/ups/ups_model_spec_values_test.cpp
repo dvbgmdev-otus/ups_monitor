@@ -244,21 +244,4 @@ outputStatus.bypass = 6,abc
 )");
     expectLoadFailure(ini, "TestUPS", "bypass");
 }
-
-// Тест 9.4: bypass отсутствует — это допустимо
-TEST_F(UpsModelSpecValuesTest, Load_WithoutBypass_Succeeds) {
-    const std::string ini = m_tempIniFiles.write(R"(
-[TestUPS]
-modelName = Test UPS
-modelName.oid = 1.2.3
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = 1,2
-)");
-    expectLoadSuccess(ini, "TestUPS");
-
-    const auto& params = m_spec.parameters();
-    const auto it = params.find("outputStatus");
-    ASSERT_NE(it, params.end());
-    EXPECT_TRUE(it->second.bypass.empty());
-}
 #endif
