@@ -28,7 +28,21 @@ modelName.oid = 1.3.6.1.2.1.1.2.0
 param1.oid = 1.3.6.1.2.1.1.1
 param1.normal =
 )");
-    expectLoadFailure(ini, "TEST", "normal");
+    expectLoadFailure(ini, "TEST", "invalid normal for parameter param1: normal is empty");
+}
+
+// Тест 1.2: Корректный bypass не скрывает некорректный normal
+TEST_F(UpsModelSpecValuesTest, ParseNormal_InvalidValueWithBypass_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TEST]
+modelName = TEST_UPS
+modelName.oid = 1.3.6.1.2.1.1.2.0
+param1.oid = 1.3.6.1.2.1.1.1
+param1.normal = abc
+param1.bypass = 6
+)");
+    expectLoadFailure(
+        ini, "TEST", "invalid normal for parameter param1: enum contains non-numeric value");
 }
 #endif
 
@@ -65,7 +79,8 @@ modelName.oid = 1.3.6.1.2.1.1.2.0
 param1.oid = 1.3.6.1.2.1.1.1
 param1.normal = a..10
 )");
-    expectLoadFailure(ini, "TEST", "without normal or bypass");
+    expectLoadFailure(
+        ini, "TEST", "invalid normal for parameter param1: range contains non-numeric value");
 }
 
 // Тест 2.4: диапазон с нечисловым суффиксом
@@ -77,7 +92,8 @@ modelName.oid = 1.3.6.1.2.1.1.2.0
 param1.oid = 1.2.3
 param1.normal = 12a..34
 )");
-    expectLoadFailure(ini, "TEST", "without normal or bypass");
+    expectLoadFailure(
+        ini, "TEST", "invalid normal for parameter param1: range contains non-numeric value");
 }
 #endif
 

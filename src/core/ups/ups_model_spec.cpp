@@ -94,6 +94,11 @@ bool UpsModelSpec::load(const std::string& path,  // NOLINT(bugprone-easily-swap
             std::string error;
             if (!parseNormal(value, spec.normal, error)) {
                 spec.normal = NormalValueSpec{};
+                m_lastError = "invalid normal for parameter ";
+                m_lastError += paramName;
+                m_lastError += ": ";
+                m_lastError += error;
+                return false;
             }
         } else if (field == "bypass") {
             std::string error;
