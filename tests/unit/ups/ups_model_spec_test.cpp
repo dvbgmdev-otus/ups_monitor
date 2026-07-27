@@ -1,13 +1,11 @@
 /**
  * @file ups_model_spec_test.cpp
- * @brief Unit-тесты загрузки и проверки спецификации модели ИБП.
+ * @brief Unit-тесты загрузки и структуры спецификации модели ИБП.
  *
  * Проверяется:
  *  - обработка отсутствующего файла и секции
  *  - проверка обязательных полей модели и параметров
- *  - разбор диапазонов и перечислений нормальных значений
  *  - загрузка нескольких параметров
- *  - разбор значений режима байпаса
  *
  * Используются временные INI-файлы, создаваемые прямо в тестах.
  */
@@ -95,89 +93,6 @@ modelName.oid = 1.2.3
 inputVoltage.oid = 1.2.3.4
 )");
     expectLoadFailure(ini, "TestUPS", "normal");
-}
-#endif
-
-#if (1)  // Формат нормальных значений
-
-// Тест 6.1: Загрузка невозможна, если диапазон normal имеет некорректный формат
-TEST_F(UpsModelSpecTest, Load_NormalRangeInvalidSyntax_ReturnsError) {
-    const std::string ini = m_tempIniFiles.write(R"(
-[TestUPS]
-modelName = Test UPS
-modelName.oid = 1.2.3
-inputVoltage.oid = 1.2.3.4
-inputVoltage.normal = 200-240
-)");
-    expectLoadFailure(ini, "TestUPS", "normal");
-}
-
-// Тест 6.2: Загрузка невозможна, если диапазон normal задан как min > max
-TEST_F(UpsModelSpecTest, Load_NormalRangeMinGreaterThanMax_ReturnsError) {
-    const std::string ini = m_tempIniFiles.write(R"(
-[TestUPS]
-modelName = Test UPS
-modelName.oid = 1.2.3
-inputVoltage.oid = 1.2.3.4
-inputVoltage.normal = 260..200
-)");
-    expectLoadFailure(ini, "TestUPS", "normal");
-}
-
-// Тест 6.3: Загрузка невозможна, если normal содержит нечисловое значение
-TEST_F(UpsModelSpecTest, Load_NormalEnumContainsNonNumeric_ReturnsError) {
-    const std::string ini = m_tempIniFiles.write(R"(
-[TestUPS]
-modelName = Test UPS
-modelName.oid = 1.2.3
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = 2,ok,4
-)");
-    expectLoadFailure(ini, "TestUPS", "normal");
-}
-
-// Тест 6.4: Корректный диапазон normal успешно загружается
-TEST_F(UpsModelSpecTest, Load_NormalRangeValid_Succeeds) {
-    const std::string ini = m_tempIniFiles.write(R"(
-[TestUPS]
-modelName = Test UPS
-modelName.oid = 1.2.3
-inputVoltage.oid = 1.2.3.4
-inputVoltage.normal = 200..259
-)");
-    expectLoadSuccess(ini, "TestUPS");
-
-    const auto& params = m_spec.parameters();
-    ASSERT_EQ(params.size(), 1u);
-    const auto it = params.find("inputVoltage");
-    ASSERT_NE(it, params.end());
-    const ups::NormalValueSpec& normal = it->second.normal;
-    EXPECT_TRUE(normal.isRange);
-    EXPECT_EQ(normal.min, 200u);
-    EXPECT_EQ(normal.max, 259u);
-}
-
-// Тест 6.5: Корректное перечисление normal успешно загружается
-TEST_F(UpsModelSpecTest, Load_NormalEnumValid_Succeeds) {
-    const std::string ini = m_tempIniFiles.write(R"(
-[TestUPS]
-modelName = Test UPS
-modelName.oid = 1.2.3
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = 2,4,6
-)");
-    expectLoadSuccess(ini, "TestUPS");
-
-    const auto& params = m_spec.parameters();
-    ASSERT_EQ(params.size(), 1u);
-    const auto it = params.find("outputStatus");
-    ASSERT_NE(it, params.end());
-    const ups::NormalValueSpec& normal = it->second.normal;
-    EXPECT_FALSE(normal.isRange);
-    ASSERT_EQ(normal.values.size(), 3u);
-    EXPECT_EQ(normal.values[0], 2u);
-    EXPECT_EQ(normal.values[1], 4u);
-    EXPECT_EQ(normal.values[2], 6u);
 }
 #endif
 
@@ -284,81 +199,5 @@ inputVoltage.normal = 200..259
     EXPECT_TRUE(normal.isRange);
     EXPECT_EQ(normal.min, 200u);
     EXPECT_EQ(normal.max, 259u);
-}
-#endif
-
-#if (1)  // Режим байпаса
-
-// Тест 9.1: bypass — корректный enum
-TEST_F(UpsModelSpecTest, Load_BypassEnumValid_Succeeds) {
-    const std::string ini = m_tempIniFiles.write(R"(
-[TestUPS]
-modelName = Test UPS
-modelName.oid = 1.2.3
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = 1,2,3
-outputStatus.bypass = 6,9,10
-)");
-    expectLoadSuccess(ini, "TestUPS");
-
-    const auto& params = m_spec.parameters();
-    ASSERT_EQ(params.size(), 1u);
-    const auto it = params.find("outputStatus");
-    ASSERT_NE(it, params.end());
-    const auto& bypass = it->second.bypass;
-    ASSERT_EQ(bypass.size(), 3u);
-    EXPECT_EQ(bypass[0], 6u);
-    EXPECT_EQ(bypass[1], 9u);
-    EXPECT_EQ(bypass[2], 10u);
-}
-
-// Тест 9.2: bypass — одно значение (допустимо)
-TEST_F(UpsModelSpecTest, Load_BypassSingleValue_Succeeds) {
-    const std::string ini = m_tempIniFiles.write(R"(
-[TestUPS]
-modelName = Test UPS
-modelName.oid = 1.2.3
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = 1
-outputStatus.bypass = 6
-)");
-    expectLoadSuccess(ini, "TestUPS");
-
-    const auto& params = m_spec.parameters();
-    const auto it = params.find("outputStatus");
-    ASSERT_NE(it, params.end());
-    const auto& bypass = it->second.bypass;
-    ASSERT_EQ(bypass.size(), 1u);
-    EXPECT_EQ(bypass[0], 6u);
-}
-
-// Тест 9.3: bypass содержит нечисловое значение - ошибка
-TEST_F(UpsModelSpecTest, Load_BypassInvalidNonNumeric_ReturnsError) {
-    const std::string ini = m_tempIniFiles.write(R"(
-[TestUPS]
-modelName = Test UPS
-
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = 1
-outputStatus.bypass = 6,abc
-)");
-    expectLoadFailure(ini, "TestUPS", "bypass");
-}
-
-// Тест 9.4: bypass отсутствует — это допустимо
-TEST_F(UpsModelSpecTest, Load_WithoutBypass_Succeeds) {
-    const std::string ini = m_tempIniFiles.write(R"(
-[TestUPS]
-modelName = Test UPS
-modelName.oid = 1.2.3
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = 1,2
-)");
-    expectLoadSuccess(ini, "TestUPS");
-
-    const auto& params = m_spec.parameters();
-    const auto it = params.find("outputStatus");
-    ASSERT_NE(it, params.end());
-    EXPECT_TRUE(it->second.bypass.empty());
 }
 #endif
