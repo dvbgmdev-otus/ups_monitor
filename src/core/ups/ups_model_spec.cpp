@@ -319,8 +319,13 @@ bool UpsModelSpec::validate() {
 
         const bool hasNormal = spec.normal.isRange || !spec.normal.values.empty();
         const bool hasBypass = !spec.bypass.empty();
-        if (!hasNormal && !hasBypass) {
-            m_lastError = "parameter without normal or bypass: " + spec.name;
+        if (spec.name == "outputStatus") {
+            if (!hasBypass) {
+                m_lastError = "parameter without bypass: " + spec.name;
+                return false;
+            }
+        } else if (!hasNormal) {
+            m_lastError = "parameter without normal: " + spec.name;
             return false;
         }
     }

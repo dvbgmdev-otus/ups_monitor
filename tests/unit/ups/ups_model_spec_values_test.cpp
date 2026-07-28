@@ -236,11 +236,11 @@ TEST_F(UpsModelSpecValuesTest, Load_EnumWithEmptyValue_ReturnsError) {
 modelName = Test UPS
 modelName.oid = 1.2.3
 
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = 1,,2
+batteryStatus.oid = 1.2.3.4
+batteryStatus.normal = 1,,2
 )");
     expectLoadFailure(
-        ini, "TestUPS", "invalid normal for parameter outputStatus: enum contains empty value");
+        ini, "TestUPS", "invalid normal for parameter batteryStatus: enum contains empty value");
 }
 
 // Тест 3.2: Загрузка невозможна, если перечисление содержит нечисловой элемент
@@ -250,12 +250,12 @@ TEST_F(UpsModelSpecValuesTest, Load_EnumWithNonNumericValue_ReturnsError) {
 modelName = Test UPS
 modelName.oid = 1.2.3
 
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = 2,ok,4
+batteryStatus.oid = 1.2.3.4
+batteryStatus.normal = 2,ok,4
 )");
     expectLoadFailure(ini,
                       "TestUPS",
-                      "invalid normal for parameter outputStatus: enum contains non-numeric value");
+                      "invalid normal for parameter batteryStatus: enum contains non-numeric value");
 }
 
 // Тест 3.3: Загрузка невозможна, если элемент содержит недопустимые символы
@@ -281,10 +281,10 @@ TEST_F(UpsModelSpecValuesTest, Load_EnumWithTrailingComma_ReturnsError) {
 modelName = Test UPS
 modelName.oid = 1.2.3
 
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = 1,2,
+batteryStatus.oid = 1.2.3.4
+batteryStatus.normal = 1,2,
 )");
-    expectLoadFailure(ini, "TestUPS", "invalid normal for parameter outputStatus");
+    expectLoadFailure(ini, "TestUPS", "invalid normal for parameter batteryStatus");
 }
 
 // Тест 3.5: Загрузка невозможна, если перечисление содержит отрицательное значение
@@ -294,10 +294,10 @@ TEST_F(UpsModelSpecValuesTest, Load_EnumWithNegativeValue_ReturnsError) {
 modelName = Test UPS
 modelName.oid = 1.2.3
 
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = -1
+batteryStatus.oid = 1.2.3.4
+batteryStatus.normal = -1
 )");
-    expectLoadFailure(ini, "TestUPS", "invalid normal for parameter outputStatus");
+    expectLoadFailure(ini, "TestUPS", "invalid normal for parameter batteryStatus");
 }
 
 // Тест 3.6: Загрузка невозможна, если значение перечисления превышает uint32_t
@@ -307,10 +307,10 @@ TEST_F(UpsModelSpecValuesTest, Load_EnumWithUint32Overflow_ReturnsError) {
 modelName = Test UPS
 modelName.oid = 1.2.3
 
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = 4294967296
+batteryStatus.oid = 1.2.3.4
+batteryStatus.normal = 4294967296
 )");
-    expectLoadFailure(ini, "TestUPS", "invalid normal for parameter outputStatus");
+    expectLoadFailure(ini, "TestUPS", "invalid normal for parameter batteryStatus");
 }
 
 // Тест 3.7: Загрузка невозможна, если значение перечисления не помещается в unsigned long
@@ -320,12 +320,12 @@ TEST_F(UpsModelSpecValuesTest, Load_EnumWithUnsignedLongOverflow_ReturnsError) {
 modelName = Test UPS
 modelName.oid = 1.2.3
 
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = 99999999999999999999999999999999999999999999999999
+batteryStatus.oid = 1.2.3.4
+batteryStatus.normal = 99999999999999999999999999999999999999999999999999
 )");
     expectLoadFailure(ini,
                       "TestUPS",
-                      "invalid normal for parameter outputStatus: enum value exceeds uint32_t");
+                      "invalid normal for parameter batteryStatus: enum value exceeds uint32_t");
 }
 
 // Тест 3.8: Перечисление из одного значения успешно загружается
@@ -335,13 +335,13 @@ TEST_F(UpsModelSpecValuesTest, Load_SingleValueEnum_Succeeds) {
 modelName = Test UPS
 modelName.oid = 1.2.3
 
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = 2
+batteryStatus.oid = 1.2.3.4
+batteryStatus.normal = 2
 )");
     expectLoadSuccess(ini, "TestUPS");
     const auto& params = m_spec.parameters();
     ASSERT_EQ(params.size(), 1u);
-    const auto it = params.find("outputStatus");
+    const auto it = params.find("batteryStatus");
     ASSERT_NE(it, params.end());
     const ups::NormalValueSpec& normal = it->second.normal;
     EXPECT_FALSE(normal.isRange);
@@ -356,13 +356,13 @@ TEST_F(UpsModelSpecValuesTest, Load_MultipleValueEnum_Succeeds) {
 modelName = Test UPS
 modelName.oid = 1.2.3
 
-outputStatus.oid = 1.2.3.4
-outputStatus.normal = 2,4,6
+batteryStatus.oid = 1.2.3.4
+batteryStatus.normal = 2,4,6
 )");
     expectLoadSuccess(ini, "TestUPS");
     const auto& params = m_spec.parameters();
     ASSERT_EQ(params.size(), 1u);
-    const auto it = params.find("outputStatus");
+    const auto it = params.find("batteryStatus");
     ASSERT_NE(it, params.end());
     const ups::NormalValueSpec& normal = it->second.normal;
     EXPECT_FALSE(normal.isRange);

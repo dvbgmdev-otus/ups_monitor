@@ -144,8 +144,8 @@ inputVoltage.normal = 200..240
 
 #if (1)  // Часть 5 — Критерии нормального состояния
 
-// Тест 5.1: Загрузка невозможна, если у параметра отсутствуют normal и bypass
-TEST_F(UpsModelSpecTest, Load_ParamWithoutNormalOrBypass_ReturnsError) {
+// Тест 5.1: Загрузка невозможна, если у обычного параметра отсутствует normal
+TEST_F(UpsModelSpecTest, Load_ParamWithoutNormal_ReturnsError) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
 modelName = Test UPS
@@ -153,7 +153,7 @@ modelName.oid = 1.2.3
 
 inputVoltage.oid = 1.2.3.4
 )");
-    expectLoadFailure(ini, "TestUPS", "parameter without normal or bypass: inputVoltage");
+    expectLoadFailure(ini, "TestUPS", "parameter without normal: inputVoltage");
 }
 
 // Тест 5.2: Параметр с normal допустим без bypass
@@ -180,6 +180,32 @@ outputStatus.oid = 1.2.3.4
 outputStatus.bypass = 6
 )");
     expectLoadSuccess(ini, "TestUPS");
+}
+
+// Тест 5.4: Bypass не заменяет обязательный normal обычного параметра
+TEST_F(UpsModelSpecTest, Load_RegularParamWithBypassWithoutNormal_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+inputVoltage.oid = 1.2.3.4
+inputVoltage.bypass = 6
+)");
+    expectLoadFailure(ini, "TestUPS", "parameter without normal: inputVoltage");
+}
+
+// Тест 5.5: Normal не заменяет обязательный bypass параметра outputStatus
+TEST_F(UpsModelSpecTest, Load_OutputStatusWithNormalWithoutBypass_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+outputStatus.oid = 1.2.3.4
+outputStatus.normal = 2,3
+)");
+    expectLoadFailure(ini, "TestUPS", "parameter without bypass: outputStatus");
 }
 #endif
 
@@ -225,7 +251,7 @@ inputFreq.oid = 1.2.3.2
 inputFreq.normal = 400..600
 
 outputStatus.oid = 1.2.3.3
-outputStatus.normal = 2,3
+outputStatus.bypass = 2,3
 )");
     expectLoadSuccess(ini, "TestUPS");
     const auto& params = m_spec.parameters();
