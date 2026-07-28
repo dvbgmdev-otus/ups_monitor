@@ -169,7 +169,22 @@ inputVoltage.normal = 0..4294967296
     expectLoadFailure(ini, "TestUPS", "invalid normal for parameter inputVoltage");
 }
 
-// Тест 2.9: Диапазон с одинаковыми границами успешно загружается
+// Тест 2.9: Загрузка невозможна, если граница диапазона не помещается в unsigned long
+TEST_F(UpsModelSpecValuesTest, Load_RangeWithUnsignedLongOverflow_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+inputVoltage.oid = 1.2.3.4
+inputVoltage.normal = 0..99999999999999999999999999999999999999999999999999
+)");
+    expectLoadFailure(ini,
+                      "TestUPS",
+                      "invalid normal for parameter inputVoltage: range value exceeds uint32_t");
+}
+
+// Тест 2.10: Диапазон с одинаковыми границами успешно загружается
 TEST_F(UpsModelSpecValuesTest, Load_RangeWithEqualBounds_Succeeds) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
@@ -190,7 +205,7 @@ inputVoltage.normal = 10..10
     EXPECT_EQ(normal.max, 10u);
 }
 
-// Тест 2.10: Корректный диапазон успешно загружается
+// Тест 2.11: Корректный диапазон успешно загружается
 TEST_F(UpsModelSpecValuesTest, Load_ValidRange_Succeeds) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
@@ -298,7 +313,22 @@ outputStatus.normal = 4294967296
     expectLoadFailure(ini, "TestUPS", "invalid normal for parameter outputStatus");
 }
 
-// Тест 3.7: Перечисление из одного значения успешно загружается
+// Тест 3.7: Загрузка невозможна, если значение перечисления не помещается в unsigned long
+TEST_F(UpsModelSpecValuesTest, Load_EnumWithUnsignedLongOverflow_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+outputStatus.oid = 1.2.3.4
+outputStatus.normal = 99999999999999999999999999999999999999999999999999
+)");
+    expectLoadFailure(ini,
+                      "TestUPS",
+                      "invalid normal for parameter outputStatus: enum value exceeds uint32_t");
+}
+
+// Тест 3.8: Перечисление из одного значения успешно загружается
 TEST_F(UpsModelSpecValuesTest, Load_SingleValueEnum_Succeeds) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
@@ -319,7 +349,7 @@ outputStatus.normal = 2
     EXPECT_EQ(normal.values[0], 2u);
 }
 
-// Тест 3.8: Перечисление из нескольких значений успешно загружается
+// Тест 3.9: Перечисление из нескольких значений успешно загружается
 TEST_F(UpsModelSpecValuesTest, Load_MultipleValueEnum_Succeeds) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
