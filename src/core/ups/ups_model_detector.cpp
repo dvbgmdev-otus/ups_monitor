@@ -37,8 +37,6 @@ bool UpsModelDetector::detect(snmp::ISnmpClient& client,
         const std::string& expectedName = spec.modelName();
         const snmp::Oid& nameOid = spec.modelNameOid();
 
-        if (expectedName.empty() || nameOid.empty()) continue;
-
         // делаем SNMP GET
         snmp::codec::SnmpValue value;
         if (!client.get(nameOid, value, &snmpErr)) continue;
