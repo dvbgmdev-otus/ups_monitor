@@ -38,6 +38,38 @@ inputVoltage.normal = 200..240
 )");
     expectLoadFailure(ini, "NON_EXISTING_MODEL", "section not found");
 }
+
+// Тест 2.2: Из файла с несколькими секциями загружается только выбранная
+TEST_F(UpsModelSpecTest, Load_MultipleSections_LoadsSelectedSection) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[FirstUPS]
+modelName = First UPS
+modelName.oid = 1.2.3.1
+
+firstParam.oid = 1.2.3.1.1
+firstParam.normal = invalid
+
+[TargetUPS]
+modelName = Target UPS
+modelName.oid = 1.2.3.2
+
+targetParam.oid = 1.2.3.2.1
+targetParam.normal = 10..20
+
+[LastUPS]
+modelName = Last UPS
+modelName.oid = 1.2.3.3
+
+lastParam.oid = 1.2.3.3.1
+lastParam.normal = invalid
+)");
+    expectLoadSuccess(ini, "TargetUPS");
+    EXPECT_EQ(m_spec.modelName(), "Target UPS");
+    EXPECT_EQ(m_spec.modelNameOid(), "1.2.3.2");
+    const auto& params = m_spec.parameters();
+    ASSERT_EQ(params.size(), 1u);
+    EXPECT_NE(params.find("targetParam"), params.end());
+}
 #endif
 
 #if (1)  // Часть 3 — Метаданные модели
