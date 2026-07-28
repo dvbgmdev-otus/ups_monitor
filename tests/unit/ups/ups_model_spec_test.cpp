@@ -288,6 +288,62 @@ inputVoltage.normal = 200..259
 inputVoltage.oid = 1.2.3.9
 inputVoltage.normal = 210..240
 )");
-    expectLoadFailure(ini, "TestUPS", "duplicate parameter: inputVoltage");
+    expectLoadFailure(ini, "TestUPS", "duplicate field: inputVoltage.oid");
+}
+
+// Тест 6.5: Повторное объявление modelName недопустимо
+TEST_F(UpsModelSpecTest, Load_DuplicateModelName_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = First name
+modelName = Second name
+modelName.oid = 1.2.3
+
+inputVoltage.oid = 1.2.3.4
+inputVoltage.normal = 200..259
+)");
+    expectLoadFailure(ini, "TestUPS", "duplicate field: modelName");
+}
+
+// Тест 6.6: Повторное объявление modelName.oid недопустимо
+TEST_F(UpsModelSpecTest, Load_DuplicateModelNameOid_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+modelName.oid = 1.2.4
+
+inputVoltage.oid = 1.2.3.4
+inputVoltage.normal = 200..259
+)");
+    expectLoadFailure(ini, "TestUPS", "duplicate field: modelName.oid");
+}
+
+// Тест 6.7: Повторное объявление normal параметра недопустимо
+TEST_F(UpsModelSpecTest, Load_DuplicateParameterNormal_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+inputVoltage.oid = 1.2.3.4
+inputVoltage.normal = 200..259
+inputVoltage.normal = 210..240
+)");
+    expectLoadFailure(ini, "TestUPS", "duplicate field: inputVoltage.normal");
+}
+
+// Тест 6.8: Повторное объявление bypass параметра недопустимо
+TEST_F(UpsModelSpecTest, Load_DuplicateParameterBypass_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+outputStatus.oid = 1.2.3.4
+outputStatus.bypass = 6
+outputStatus.bypass = 9
+)");
+    expectLoadFailure(ini, "TestUPS", "duplicate field: outputStatus.bypass");
 }
 #endif

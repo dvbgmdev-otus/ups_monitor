@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <limits>
+#include <set>
 #include <stdexcept>
 
 #include "fs_utils.h"
@@ -30,6 +31,15 @@ bool UpsModelSpec::load(const std::string& path,  // NOLINT(bugprone-easily-swap
 
     bool inSection = false;
     bool sectionFound = false;
+    std::set<std::string> seenFields;  // для проверки дубликатов ключей
+
+    const auto registerField = [this, &seenFields](const std::string& field) {
+        if (!seenFields.insert(field).second) {
+            m_lastError = "duplicate field: " + field;
+            return false;
+        }
+        return true;
+    };
 
     std::string line;
     while (std::getline(file, line)) {
@@ -64,6 +74,9 @@ bool UpsModelSpec::load(const std::string& path,  // NOLINT(bugprone-easily-swap
 
         // ---- modelName ----
         if (key == "modelName") {
+            if (!registerField(key)) {
+                return false;
+            }
             m_modelName = value;
             continue;
         }
@@ -75,6 +88,9 @@ bool UpsModelSpec::load(const std::string& path,  // NOLINT(bugprone-easily-swap
         // если дошли сюда то есть параметр paramName.field
         // modelName.oid используется для определения модели и не является UPS-параметром.
         if (key == "modelName.oid") {
+            if (!registerField(key)) {
+                return false;
+            }
             m_modelNameOid = snmp::Oid(value);
             continue;
         }
@@ -87,13 +103,14 @@ bool UpsModelSpec::load(const std::string& path,  // NOLINT(bugprone-easily-swap
         spec.name = paramName;
 
         if (field == "oid") {
-            if (!spec.oid.empty()) {
-                m_lastError = "duplicate parameter: ";
-                m_lastError += paramName;
+            if (!registerField(key)) {
                 return false;
             }
             spec.oid = value;
         } else if (field == "normal") {
+            if (!registerField(key)) {
+                return false;
+            }
             std::string error;
             if (!parseNormal(value, spec.normal, error)) {
                 spec.normal = NormalValueSpec{};
@@ -104,6 +121,9 @@ bool UpsModelSpec::load(const std::string& path,  // NOLINT(bugprone-easily-swap
                 return false;
             }
         } else if (field == "bypass") {
+            if (!registerField(key)) {
+                return false;
+            }
             std::string error;
             if (!parseEnumValues(value, spec.bypass, error)) {
                 m_lastError = "invalid bypass for parameter ";
