@@ -89,17 +89,22 @@ UpsDeviationFlags& operator|=(UpsDeviationFlags& lhs, UpsDeviationFlags rhs);
 UpsDeviationFlags operator&(UpsDeviationFlags lhs, UpsDeviationFlags rhs);
 
 /**
- * @brief Проверяет наличие причины отклонения в битовой маске.
+ * @brief Проверяет наличие отдельной причины отклонения в битовой маске.
+ *
+ * Комбинированные маски во втором аргументе не поддерживаются.
+ *
  * @param value Проверяемая битовая маска.
- * @param flag Проверяемая причина отклонения.
+ * @param flag Отдельная проверяемая причина отклонения.
  * @return true, если причина присутствует в битовой маске.
  */
 bool hasFlag(UpsDeviationFlags value, UpsDeviationFlags flag);
 
 /**
- * @brief Определяет, приводит ли флаг отклонения к аварийному состоянию UPS.
+ * @brief Определяет, приводит ли отдельный флаг отклонения к аварийному состоянию UPS.
  *
- * @param flag Флаг отклонения.
+ * Комбинированные маски не поддерживаются.
+ *
+ * @param flag Отдельный флаг отклонения.
  * @return true, если отклонение аварийное (Failure).
  * @return false, если отклонение предупреждающее (Warning).
  */
