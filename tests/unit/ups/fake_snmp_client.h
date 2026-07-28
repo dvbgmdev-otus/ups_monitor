@@ -23,19 +23,23 @@ public:
     struct Response {
         bool ok;                       ///< Результат выполнения SNMP GET-запроса.
         snmp::codec::SnmpValue value;  ///< Значение, возвращаемое при успешном запросе.
+        snmp::ErrorMessage error;       ///< Ошибка, возвращаемая при неуспешном запросе.
     };
 
     void set(const snmp::Oid& oid, const Response& response) { m_table[oid] = response; }
 
     bool get(const snmp::Oid& oid,
              snmp::codec::SnmpValue& out,
-             snmp::ErrorMessage* = nullptr) override {
+             snmp::ErrorMessage* error = nullptr) override {
         const auto it = m_table.find(oid);
         if (it == m_table.end()) {
             return false;
         }
 
         if (!it->second.ok) {
+            if (error != nullptr) {
+                *error = it->second.error;
+            }
             return false;
         }
 

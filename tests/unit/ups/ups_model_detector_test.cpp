@@ -104,11 +104,15 @@ TEST_F(UpsModelDetectorTest, Detect_SnmpGetFails_ReturnsError) {
 [TEST]
 modelName = TEST_UPS
 modelName.oid = 1.2.3
+
+inputVoltage.oid = 1.2.3.4
+inputVoltage.normal = 200..240
 )");
-    m_snmp.set(snmp::Oid("1.2.3"), { false, {} });
+    m_snmp.set(snmp::Oid("1.2.3"), { false, {}, "SNMP request failed" });
 
     EXPECT_FALSE(ups::UpsModelDetector::detect(m_snmp, ini, m_model, m_error));
     EXPECT_TRUE(m_model.empty());
+    EXPECT_EQ(m_error, "SNMP request failed");
 }
 #endif
 
@@ -121,7 +125,7 @@ TEST_F(UpsModelDetectorTest, Detect_SnmpValueNotString_ReturnsError) {
 modelName = TEST_UPS
 modelName.oid = 1.2.3
 )");
-    m_snmp.set(snmp::Oid("1.2.3"), { true, makeIntValue(42) });
+    m_snmp.set(snmp::Oid("1.2.3"), { true, makeIntValue(42), {} });
 
     EXPECT_FALSE(ups::UpsModelDetector::detect(m_snmp, ini, m_model, m_error));
     EXPECT_TRUE(m_model.empty());
@@ -137,7 +141,7 @@ TEST_F(UpsModelDetectorTest, Detect_ModelNameMismatch_ReturnsError) {
 modelName = TEST_UPS
 modelName.oid = 1.2.3
 )");
-    m_snmp.set(snmp::Oid("1.2.3"), { true, makeStringValue("OTHER_UPS") });
+    m_snmp.set(snmp::Oid("1.2.3"), { true, makeStringValue("OTHER_UPS"), {} });
 
     EXPECT_FALSE(ups::UpsModelDetector::detect(m_snmp, ini, m_model, m_error));
     EXPECT_TRUE(m_model.empty());
@@ -156,7 +160,7 @@ modelName.oid = 1.2.3
 inputVoltage.oid = 1.2.3.4
 inputVoltage.normal = 200..240
 )");
-    m_snmp.set(snmp::Oid("1.2.3"), { true, makeStringValue("APC Smart-UPS 1500") });
+    m_snmp.set(snmp::Oid("1.2.3"), { true, makeStringValue("APC Smart-UPS 1500"), {} });
 
     EXPECT_TRUE(ups::UpsModelDetector::detect(m_snmp, ini, m_model, m_error));
     EXPECT_TRUE(m_error.empty());
@@ -177,8 +181,8 @@ modelName.oid = 1.2.3
 modelName = B_UPS
 modelName.oid = 1.2.4
 )");
-    m_snmp.set(snmp::Oid("1.2.3"), { true, makeStringValue("X") });
-    m_snmp.set(snmp::Oid("1.2.4"), { true, makeStringValue("Y") });
+    m_snmp.set(snmp::Oid("1.2.3"), { true, makeStringValue("X"), {} });
+    m_snmp.set(snmp::Oid("1.2.4"), { true, makeStringValue("Y"), {} });
 
     EXPECT_FALSE(ups::UpsModelDetector::detect(m_snmp, ini, m_model, m_error));
     EXPECT_TRUE(m_model.empty());
