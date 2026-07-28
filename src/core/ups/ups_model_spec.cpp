@@ -6,6 +6,8 @@
 #include "ups_model_spec.h"
 
 #include <fstream>
+#include <limits>
+#include <stdexcept>
 
 #include "fs_utils.h"
 #include "string_utils.h"
@@ -186,20 +188,41 @@ bool UpsModelSpec::parseRange(const std::string& s,
         return false;
     }
 
-    try {
-        size_t p1 = 0, p2 = 0;
-        min = std::stoul(minStr, &p1);
-        max = std::stoul(maxStr, &p2);
+    if (minStr.front() == '-' || maxStr.front() == '-') {
+        error = "range contains negative value";
+        return false;
+    }
 
-        // ВАЖНО: проверяем, что строка съедена полностью
-        if (p1 != minStr.size() || p2 != maxStr.size()) {
-            error = "range contains non-numeric value";
-            return false;
-        }
-    } catch (...) {
+    size_t p1 = 0;
+    size_t p2 = 0;
+    unsigned long minValue = 0;
+    unsigned long maxValue = 0;
+
+    try {
+        minValue = std::stoul(minStr, &p1);
+        maxValue = std::stoul(maxStr, &p2);
+    } catch (const std::invalid_argument&) {
+        error = "range contains non-numeric value";
+        return false;
+    } catch (const std::out_of_range&) {
+        error = "range value exceeds uint32_t";
+        return false;
+    }
+
+    // ВАЖНО: проверяем, что строка съедена полностью
+    if (p1 != minStr.size() || p2 != maxStr.size()) {
         error = "range contains non-numeric value";
         return false;
     }
+
+    constexpr unsigned long uint32Max = std::numeric_limits<uint32_t>::max();
+    if (minValue > uint32Max || maxValue > uint32Max) {
+        error = "range value exceeds uint32_t";
+        return false;
+    }
+
+    min = static_cast<uint32_t>(minValue);
+    max = static_cast<uint32_t>(maxValue);
 
     if (min > max) {
         error = "range min greater than max";
@@ -216,7 +239,7 @@ bool UpsModelSpec::parseEnumValues(const std::string& s,
     error.clear();
 
     size_t pos = 0;
-    while (pos < s.size()) {
+    while (pos <= s.size()) {
         size_t comma = s.find(',', pos);
         std::string token =
             (comma == std::string::npos) ? s.substr(pos) : s.substr(pos, comma - pos);
@@ -227,21 +250,37 @@ bool UpsModelSpec::parseEnumValues(const std::string& s,
             return false;
         }
 
-        try {
-            size_t parsed = 0;
-            uint32_t value = std::stoul(token, &parsed);
-
-            // ВАЖНО: проверяем, что ВСЯ строка — число
-            if (parsed != token.size()) {
-                error = "enum contains invalid characters";
-                return false;
-            }
-
-            out.push_back(value);
-        } catch (...) {
-            error = "enum contains non-numeric value";
+        if (token.front() == '-') {
+            error = "enum contains negative value";
             return false;
         }
+
+        size_t parsed = 0;
+        unsigned long parsedValue = 0;
+
+        try {
+            parsedValue = std::stoul(token, &parsed);
+        } catch (const std::invalid_argument&) {
+            error = "enum contains non-numeric value";
+            return false;
+        } catch (const std::out_of_range&) {
+            error = "enum value exceeds uint32_t";
+            return false;
+        }
+
+        if (parsed != token.size()) {
+            error = "enum contains invalid characters";
+            return false;
+        }
+
+        constexpr unsigned long uint32Max = std::numeric_limits<uint32_t>::max();
+
+        if (parsedValue > uint32Max) {
+            error = "enum value exceeds uint32_t";
+            return false;
+        }
+
+        out.push_back(static_cast<uint32_t>(parsedValue));
 
         if (comma == std::string::npos) break;
 

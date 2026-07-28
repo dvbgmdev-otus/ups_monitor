@@ -143,7 +143,54 @@ inputVoltage.normal = 260..200
         ini, "TestUPS", "invalid normal for parameter inputVoltage: range min greater than max");
 }
 
-// Тест 2.7: Корректный диапазон успешно загружается
+// Тест 2.7: Загрузка невозможна, если граница диапазона отрицательная
+TEST_F(UpsModelSpecValuesTest, Load_RangeWithNegativeBound_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+inputVoltage.oid = 1.2.3.4
+inputVoltage.normal = 0..-1
+)");
+    expectLoadFailure(ini, "TestUPS", "invalid normal for parameter inputVoltage");
+}
+
+// Тест 2.8: Загрузка невозможна, если граница диапазона превышает uint32_t
+TEST_F(UpsModelSpecValuesTest, Load_RangeWithUint32Overflow_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+inputVoltage.oid = 1.2.3.4
+inputVoltage.normal = 0..4294967296
+)");
+    expectLoadFailure(ini, "TestUPS", "invalid normal for parameter inputVoltage");
+}
+
+// Тест 2.9: Диапазон с одинаковыми границами успешно загружается
+TEST_F(UpsModelSpecValuesTest, Load_RangeWithEqualBounds_Succeeds) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+inputVoltage.oid = 1.2.3.4
+inputVoltage.normal = 10..10
+)");
+    expectLoadSuccess(ini, "TestUPS");
+    const auto& params = m_spec.parameters();
+    ASSERT_EQ(params.size(), 1u);
+    const auto it = params.find("inputVoltage");
+    ASSERT_NE(it, params.end());
+    const ups::NormalValueSpec& normal = it->second.normal;
+    EXPECT_TRUE(normal.isRange);
+    EXPECT_EQ(normal.min, 10u);
+    EXPECT_EQ(normal.max, 10u);
+}
+
+// Тест 2.10: Корректный диапазон успешно загружается
 TEST_F(UpsModelSpecValuesTest, Load_ValidRange_Succeeds) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
@@ -212,7 +259,46 @@ inputVoltage.normal = 200-240
         "invalid normal for parameter inputVoltage: enum contains invalid characters");
 }
 
-// Тест 3.4: Перечисление из одного значения успешно загружается
+// Тест 3.4: Загрузка невозможна, если перечисление заканчивается запятой
+TEST_F(UpsModelSpecValuesTest, Load_EnumWithTrailingComma_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+outputStatus.oid = 1.2.3.4
+outputStatus.normal = 1,2,
+)");
+    expectLoadFailure(ini, "TestUPS", "invalid normal for parameter outputStatus");
+}
+
+// Тест 3.5: Загрузка невозможна, если перечисление содержит отрицательное значение
+TEST_F(UpsModelSpecValuesTest, Load_EnumWithNegativeValue_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+outputStatus.oid = 1.2.3.4
+outputStatus.normal = -1
+)");
+    expectLoadFailure(ini, "TestUPS", "invalid normal for parameter outputStatus");
+}
+
+// Тест 3.6: Загрузка невозможна, если значение перечисления превышает uint32_t
+TEST_F(UpsModelSpecValuesTest, Load_EnumWithUint32Overflow_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+outputStatus.oid = 1.2.3.4
+outputStatus.normal = 4294967296
+)");
+    expectLoadFailure(ini, "TestUPS", "invalid normal for parameter outputStatus");
+}
+
+// Тест 3.7: Перечисление из одного значения успешно загружается
 TEST_F(UpsModelSpecValuesTest, Load_SingleValueEnum_Succeeds) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
@@ -233,7 +319,7 @@ outputStatus.normal = 2
     EXPECT_EQ(normal.values[0], 2u);
 }
 
-// Тест 3.5: Перечисление из нескольких значений успешно загружается
+// Тест 3.8: Перечисление из нескольких значений успешно загружается
 TEST_F(UpsModelSpecValuesTest, Load_MultipleValueEnum_Succeeds) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]
@@ -318,5 +404,19 @@ outputStatus.bypass = 6,abc
         ini,
         "TestUPS",
         "invalid bypass for parameter outputStatus: enum contains non-numeric value");
+}
+
+// Тест 4.4: Указанный bypass не может быть пустым даже при наличии normal
+TEST_F(UpsModelSpecValuesTest, Load_EmptyBypassWithNormal_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+outputStatus.oid = 1.2.3.4
+outputStatus.normal = 1
+outputStatus.bypass =
+)");
+    expectLoadFailure(ini, "TestUPS", "invalid bypass for parameter outputStatus");
 }
 #endif
