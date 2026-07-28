@@ -98,7 +98,20 @@ inputVoltage.normal = 200..240
     expectLoadFailure(ini, "TestUPS", "modelName.oid missing");
 }
 
-// Тест 3.3: Метаданные модели доступны после успешной загрузки
+// Тест 3.3: Опечатка в modelName.oid не заменяет обязательное поле
+TEST_F(UpsModelSpecTest, Load_ModelNameOidMisspelled_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oidd = 1.2.3
+
+inputVoltage.oid = 1.2.3.4
+inputVoltage.normal = 200..240
+)");
+    expectLoadFailure(ini, "TestUPS", "modelName.oid missing");
+}
+
+// Тест 3.4: Метаданные модели доступны после успешной загрузки
 TEST_F(UpsModelSpecTest, Load_ValidMetadata_ReturnsModelNameAndOid) {
     const std::string ini = m_tempIniFiles.write(R"(
 [TestUPS]

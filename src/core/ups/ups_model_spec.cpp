@@ -73,12 +73,13 @@ bool UpsModelSpec::load(const std::string& path,  // NOLINT(bugprone-easily-swap
         if (dot == std::string::npos) continue;
 
         // если дошли сюда то есть параметр paramName.field
-        std::string paramName = key.substr(0, dot);
-        // modelName.* — не UPS-параметр
-        if (paramName == "modelName") {
+        // modelName.oid используется для определения модели и не является UPS-параметром.
+        if (key == "modelName.oid") {
             m_modelNameOid = snmp::Oid(value);
             continue;
         }
+
+        std::string paramName = key.substr(0, dot);
         std::string field = key.substr(dot + 1);
 
         // Регистрируем параметр
