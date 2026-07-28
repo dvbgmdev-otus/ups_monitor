@@ -312,6 +312,11 @@ bool UpsModelSpec::validate() {
     for (const auto& kv : m_parameters) {
         const auto& spec = kv.second;
 
+        if (toDeviationFlag(spec.name) == UpsDeviationFlags::NONE) {
+            m_lastError = "unsupported parameter: " + spec.name;
+            return false;
+        }
+
         if (spec.oid.empty()) {
             m_lastError = "parameter without oid: " + spec.name;
             return false;

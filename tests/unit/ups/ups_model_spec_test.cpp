@@ -46,29 +46,29 @@ TEST_F(UpsModelSpecTest, Load_MultipleSections_LoadsSelectedSection) {
 modelName = First UPS
 modelName.oid = 1.2.3.1
 
-firstParam.oid = 1.2.3.1.1
-firstParam.normal = invalid
+inputVoltage.oid = 1.2.3.1.1
+inputVoltage.normal = invalid
 
 [TargetUPS]
 modelName = Target UPS
 modelName.oid = 1.2.3.2
 
-targetParam.oid = 1.2.3.2.1
-targetParam.normal = 10..20
+batteryTemp.oid = 1.2.3.2.1
+batteryTemp.normal = 10..20
 
 [LastUPS]
 modelName = Last UPS
 modelName.oid = 1.2.3.3
 
-lastParam.oid = 1.2.3.3.1
-lastParam.normal = invalid
+outputVoltage.oid = 1.2.3.3.1
+outputVoltage.normal = invalid
 )");
     expectLoadSuccess(ini, "TargetUPS");
     EXPECT_EQ(m_spec.modelName(), "Target UPS");
     EXPECT_EQ(m_spec.modelNameOid(), "1.2.3.2");
     const auto& params = m_spec.parameters();
     ASSERT_EQ(params.size(), 1u);
-    EXPECT_NE(params.find("targetParam"), params.end());
+    EXPECT_NE(params.find("batteryTemp"), params.end());
 }
 #endif
 
@@ -139,6 +139,19 @@ modelName.oid = 1.2.3
 inputVoltage.normal = 200..240
 )");
     expectLoadFailure(ini, "TestUPS", "parameter without oid: inputVoltage");
+}
+
+// Тест 4.2: Загрузка невозможна, если имя параметра не поддерживается
+TEST_F(UpsModelSpecTest, Load_UnsupportedParameter_ReturnsError) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[TestUPS]
+modelName = Test UPS
+modelName.oid = 1.2.3
+
+outputVoltge.oid = 1.2.3.4
+outputVoltge.normal = 200..259
+)");
+    expectLoadFailure(ini, "TestUPS", "unsupported parameter: outputVoltge");
 }
 #endif
 
