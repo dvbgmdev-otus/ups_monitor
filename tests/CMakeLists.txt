@@ -68,6 +68,13 @@ add_unit_test(ups_model_types_test
         ${CORE_NAME}
 )
 
+add_unit_test(ups_param_checker_test
+    SOURCES
+        ${UNIT_TEST_DIR}/ups/ups_param_checker_test.cpp
+    LIBRARIES
+        ${CORE_NAME}
+)
+
 add_unit_test(ups_model_spec_test
     SOURCES
         ${UNIT_TEST_DIR}/temp_ini_file.cpp

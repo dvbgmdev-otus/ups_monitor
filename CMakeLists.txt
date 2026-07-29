@@ -37,6 +37,7 @@ if(1) # COVERAGE CONFIG BLOCK
         ${SRC_DIR}/core/ups/ups_model_detector.cpp
         ${SRC_DIR}/core/ups/ups_model_spec.cpp
         ${SRC_DIR}/core/ups/ups_model_types.cpp
+        ${SRC_DIR}/core/ups/ups_param_checker.cpp
         ${SRC_DIR}/snmp/ber/snmp_ber_reader.cpp
         ${SRC_DIR}/snmp/ber/snmp_ber_utils.cpp
         ${SRC_DIR}/snmp/ber/snmp_ber_writer.cpp
