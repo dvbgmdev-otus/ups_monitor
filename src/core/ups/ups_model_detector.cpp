@@ -19,9 +19,7 @@ namespace {
  * @param section Имя отклонённой секции модели.
  * @param reason Причина отклонения секции.
  */
-void appendError(ErrorMessage& errors,
-                 const IniSectionName& section,
-                 const std::string& reason) {
+void appendError(ErrorMessage& errors, const IniSectionName& section, const std::string& reason) {
     if (!errors.empty()) {
         errors += '\n';
     }

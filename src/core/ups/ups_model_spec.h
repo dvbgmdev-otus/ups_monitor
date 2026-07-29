@@ -61,10 +61,10 @@ public:
     const ErrorMessage& lastError() const;
 
 private:
-    std::string m_modelName{};                    ///< Имя модели UPS.
-    snmp::Oid m_modelNameOid{};                   ///< SNMP OID имени модели UPS.
+    std::string m_modelName{};                       ///< Имя модели UPS.
+    snmp::Oid m_modelNameOid{};                      ///< SNMP OID имени модели UPS.
     std::map<ParamName, UpsParamSpec> m_parameters;  ///< Параметры модели по имени.
-    ErrorMessage m_lastError{};                   ///< Последняя ошибка загрузки или валидации.
+    ErrorMessage m_lastError{};                      ///< Последняя ошибка загрузки или валидации.
 
     /**
      * @brief Разбирает описание допустимых значений параметра.
@@ -83,10 +83,7 @@ private:
      * @param error [out] Текст ошибки разбора.
      * @return true, если диапазон успешно разобран.
      */
-    static bool parseRange(const std::string& s,
-                           uint32_t& min,
-                           uint32_t& max,
-                           ErrorMessage& error);
+    static bool parseRange(const std::string& s, uint32_t& min, uint32_t& max, ErrorMessage& error);
 
     /**
      * @brief Разбирает список перечислимых значений.

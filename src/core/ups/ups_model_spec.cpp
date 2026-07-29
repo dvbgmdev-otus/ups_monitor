@@ -148,7 +148,9 @@ const std::map<ParamName, UpsParamSpec>& UpsModelSpec::parameters() const { retu
 
 const ErrorMessage& UpsModelSpec::lastError() const { return m_lastError; }
 
-bool UpsModelSpec::parseNormal(const std::string& value, NormalValueSpec& out, ErrorMessage& error) {
+bool UpsModelSpec::parseNormal(const std::string& value,
+                               NormalValueSpec& out,
+                               ErrorMessage& error) {
     out = NormalValueSpec{};
     error.clear();
 
