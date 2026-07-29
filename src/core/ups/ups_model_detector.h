@@ -35,7 +35,16 @@ public:
      * @param client    Инициализированный SNMP-клиент.
      * @param iniFile   Путь к INI-файлу со спецификациями моделей.
      * @param outModel  [out] Идентификатор модели — имя секции, например "APC_RT_2000_XL".
-     * @param err       [out] Текст ошибки при неудаче.
+     * @param err       [out] Текст ошибки при неудаче. Если секции обработаны, но модель
+     * не определена, первая строка содержит общее сообщение, а последующие — причины
+     * отклонения секций в формате `section [имя]: причина`.
+     *
+     * Пример:
+     * @code
+     * UPS model could not be detected
+     * section [APC1000]: timeout
+     * section [APC3000]: model name does not match
+     * @endcode
      *
      * @return true, если идентификатор модели успешно определён.
      */

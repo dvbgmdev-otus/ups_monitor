@@ -30,6 +30,9 @@ public:
      * @param path Путь к ini-файлу.
      * @param section Имя секции (ключ модели).
      * @return true при успешной загрузке и валидации.
+     *
+     * @warning Если метод вернул false, спецификация может быть заполнена частично.
+     * В этом случае разрешено использовать только lastError().
      */
     bool load(const std::string& path, const IniSectionName& section);
 
