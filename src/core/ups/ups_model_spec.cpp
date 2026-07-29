@@ -16,7 +16,7 @@
 namespace ups {
 
 bool UpsModelSpec::load(const std::string& path,  // NOLINT(bugprone-easily-swappable-parameters)
-                        const std::string& section) {
+                        const IniSectionName& section) {
     m_lastError.clear();
     m_modelName.clear();
     m_modelNameOid.clear();

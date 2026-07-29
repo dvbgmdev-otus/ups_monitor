@@ -39,7 +39,7 @@ protected:
     }
 
     test::FakeSnmpClient m_snmp;
-    std::string m_model;
+    ups::IniSectionName m_model;
     snmp::ErrorMessage m_error;
     test::TempIniFileStorage m_tempIniFiles;
 };

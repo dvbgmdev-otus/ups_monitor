@@ -38,7 +38,7 @@ public:
      */
     static bool detect(snmp::ISnmpClient& client,
                        const std::string& iniFile,
-                       std::string& outModel,
+                       IniSectionName& outModel,
                        ErrorMessage& err);
 };
 

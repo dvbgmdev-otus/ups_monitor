@@ -40,7 +40,7 @@ struct NormalValueSpec {
 struct UpsParamSpec {
     ParamName name;                ///< Имя параметра, например inputVoltage или outputStatus.
     snmp::Oid oid;                 ///< SNMP OID параметра.
-    NormalValueSpec normal;             ///< Допустимые значения параметра.
+    NormalValueSpec normal;        ///< Допустимые значения параметра.
     std::vector<uint32_t> bypass;  ///< Значения, соответствующие режиму bypass.
 };
 

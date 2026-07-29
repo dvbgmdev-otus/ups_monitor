@@ -18,7 +18,9 @@ namespace {
  * @param section Имя отклонённой секции модели.
  * @param reason Причина отклонения секции.
  */
-void appendError(ErrorMessage& errors, const std::string& section, const std::string& reason) {
+void appendError(ErrorMessage& errors,
+                 const IniSectionName& section,
+                 const std::string& reason) {
     if (!errors.empty()) {
         errors += '\n';
     }
@@ -29,7 +31,7 @@ void appendError(ErrorMessage& errors, const std::string& section, const std::st
 
 bool UpsModelDetector::detect(snmp::ISnmpClient& client,
                               const std::string& iniFile,
-                              std::string& outModel,
+                              IniSectionName& outModel,
                               ErrorMessage& err) {
     outModel.clear();
     err.clear();

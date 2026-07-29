@@ -31,7 +31,7 @@ public:
      * @param section Имя секции (ключ модели).
      * @return true при успешной загрузке и валидации.
      */
-    bool load(const std::string& path, const std::string& section);
+    bool load(const std::string& path, const IniSectionName& section);
 
     /**
      * @brief Возвращает SNMP OID имени модели UPS.
