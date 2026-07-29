@@ -6,8 +6,6 @@
 #ifndef UPS_PARAM_CHECKER_H
 #define UPS_PARAM_CHECKER_H
 
-#include <cstdint>
-
 #include "snmp_codec_types.h"
 #include "ups_model_types.h"
 
@@ -20,7 +18,7 @@ namespace ups {
  * Класс выполняет:
  *  - проверку валидности полученного SNMP-значения;
  *  - проверку значения на выход за допустимые пределы (normal / bypass);
- *  - установку диагностического бита в поле descr при отклонении.
+ *  - установку диагностического флага при отклонении.
  */
 class UpsParamChecker {
 public:
@@ -32,7 +30,7 @@ public:
      * @param deviation  Диагностический бит, который нужно установить
      *                   при выходе параметра за допустимые пределы
      *                   (НЕ может быть UpsDeviationFlags::NONE)
-     * @param descr      [in/out] Битовое поле диагностических причин
+     * @param deviations [in/out] Флаги отклонений состояния UPS
      *
      * @return true  — значение получено и валидно
      * @return false — значение не получено или невалидно
@@ -40,7 +38,7 @@ public:
     static bool check(const UpsParamSpec& spec,
                       const snmp::codec::SnmpValue& value,
                       UpsDeviationFlags deviation,
-                      uint32_t& descr);
+                      UpsDeviationFlags& deviations);
 };
 
 }  // namespace ups

@@ -13,9 +13,9 @@ using snmp::codec::SnmpValue;
 
 class UpsParamCheckerTest : public ::testing::Test {
 protected:
-    uint32_t m_descr{ 0 };
+    ups::UpsDeviationFlags m_deviations{ ups::UpsDeviationFlags::NONE };
 
-    void SetUp() override { m_descr = 0; }
+    void SetUp() override { m_deviations = ups::UpsDeviationFlags::NONE; }
 
     static SnmpValue makeIntValue(int value) {
         SnmpValue result;
@@ -49,10 +49,10 @@ TEST_F(UpsParamCheckerTest, NormalRange_ValueInRange_Ok) {
     spec.normal.max = 259;
 
     const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(230), ups::UpsDeviationFlags::INPUT_ALERT, m_descr);
+        spec, makeIntValue(230), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
 
     EXPECT_TRUE(ok);
-    EXPECT_EQ(m_descr, 0u);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
 
 // Тест 1.2: Значение из перечисления считается допустимым
@@ -62,10 +62,10 @@ TEST_F(UpsParamCheckerTest, NormalEnum_ValueInEnum_Ok) {
     spec.normal.values = { 2, 3 };
 
     const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(2), ups::UpsDeviationFlags::BATTERY_ALERT, m_descr);
+        spec, makeIntValue(2), ups::UpsDeviationFlags::BATTERY_ALERT, m_deviations);
 
     EXPECT_TRUE(ok);
-    EXPECT_EQ(m_descr, 0u);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
 
 // Тест 1.3: Работа не на байпасе не устанавливает флаг отклонения
@@ -75,10 +75,10 @@ TEST_F(UpsParamCheckerTest, BypassValue_NotInBypass_Ok) {
     spec.bypass = { 6, 9, 10 };
 
     const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(0), ups::UpsDeviationFlags::BYPASS_ALERT, m_descr);
+        spec, makeIntValue(0), ups::UpsDeviationFlags::BYPASS_ALERT, m_deviations);
 
     EXPECT_TRUE(ok);
-    EXPECT_EQ(m_descr, 0u);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
 
 #endif
@@ -94,10 +94,10 @@ TEST_F(UpsParamCheckerTest, NormalRange_ValueOutOfRange_SetsAlert) {
     spec.normal.max = 50;
 
     const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(80), ups::UpsDeviationFlags::TEMP_ALERT, m_descr);
+        spec, makeIntValue(80), ups::UpsDeviationFlags::TEMP_ALERT, m_deviations);
 
     EXPECT_TRUE(ok);
-    EXPECT_NE(m_descr & static_cast<uint32_t>(ups::UpsDeviationFlags::TEMP_ALERT), 0u);
+    EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::TEMP_ALERT));
 }
 
 // Тест 2.2: Выходное напряжение вне диапазона устанавливает аварийный флаг
@@ -109,10 +109,10 @@ TEST_F(UpsParamCheckerTest, OutputVoltage_OutOfRange_SetsFailure) {
     spec.normal.max = 259;
 
     const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(180), ups::UpsDeviationFlags::OUTPUT_FAILURE, m_descr);
+        spec, makeIntValue(180), ups::UpsDeviationFlags::OUTPUT_FAILURE, m_deviations);
 
     EXPECT_TRUE(ok);
-    EXPECT_NE(m_descr & static_cast<uint32_t>(ups::UpsDeviationFlags::OUTPUT_FAILURE), 0u);
+    EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::OUTPUT_FAILURE));
 }
 
 #endif
@@ -126,10 +126,10 @@ TEST_F(UpsParamCheckerTest, BypassValue_SetsBypassAlert) {
     spec.bypass = { 6, 9, 10 };
 
     const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(6), ups::UpsDeviationFlags::BYPASS_ALERT, m_descr);
+        spec, makeIntValue(6), ups::UpsDeviationFlags::BYPASS_ALERT, m_deviations);
 
     EXPECT_TRUE(ok);
-    EXPECT_NE(m_descr & static_cast<uint32_t>(ups::UpsDeviationFlags::BYPASS_ALERT), 0u);
+    EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::BYPASS_ALERT));
 }
 
 #endif
@@ -145,10 +145,10 @@ TEST_F(UpsParamCheckerTest, NullValue_ReturnsFalse) {
     spec.normal.max = 259;
 
     const bool ok = ups::UpsParamChecker::check(
-        spec, makeNullValue(), ups::UpsDeviationFlags::INPUT_ALERT, m_descr);
+        spec, makeNullValue(), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
 
     EXPECT_FALSE(ok);
-    EXPECT_EQ(m_descr, 0u);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
 
 // Тест 4.2: Строковое значение считается некорректным
@@ -160,10 +160,10 @@ TEST_F(UpsParamCheckerTest, StringValue_ReturnsFalse) {
     spec.normal.max = 259;
 
     const bool ok = ups::UpsParamChecker::check(
-        spec, makeStringValue("invalid"), ups::UpsDeviationFlags::INPUT_ALERT, m_descr);
+        spec, makeStringValue("invalid"), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
 
     EXPECT_FALSE(ok);
-    EXPECT_EQ(m_descr, 0u);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
 
 #endif

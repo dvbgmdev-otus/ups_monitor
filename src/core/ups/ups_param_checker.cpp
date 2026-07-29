@@ -12,7 +12,7 @@ namespace ups {
 bool UpsParamChecker::check(const UpsParamSpec& spec,
                             const snmp::codec::SnmpValue& value,
                             UpsDeviationFlags deviation,
-                            uint32_t& descr) {
+                            UpsDeviationFlags& deviations) {
     // UpsDeviationFlags::NONE здесь логически недопустим
     // считаем, что контракт соблюдён
     // при желании можно добавить assert
@@ -33,7 +33,7 @@ bool UpsParamChecker::check(const UpsParamSpec& spec,
     if (!spec.bypass.empty()) {
         auto it = std::find(spec.bypass.begin(), spec.bypass.end(), v);
         if (it != spec.bypass.end()) {
-            descr |= static_cast<uint32_t>(UpsDeviationFlags::BYPASS_ALERT);
+            deviations |= UpsDeviationFlags::BYPASS_ALERT;
         }
         return true;
     }
@@ -51,7 +51,7 @@ bool UpsParamChecker::check(const UpsParamSpec& spec,
     }
 
     if (!inNormal) {
-        descr |= static_cast<uint32_t>(deviation);
+        deviations |= deviation;
     }
 
     return true;
