@@ -66,7 +66,9 @@ param1.oid = 1.2.3
 
     EXPECT_FALSE(ups::UpsModelDetector::detect(m_snmp, ini, m_model, m_error));
     EXPECT_TRUE(m_model.empty());
-    EXPECT_FALSE(m_error.empty());
+    EXPECT_EQ(m_error,
+              "UPS model could not be detected\n"
+              "section [TEST]: invalid specification: modelName missing");
 }
 #endif
 
@@ -82,6 +84,9 @@ modelName.oid = 1.2.3
 
     EXPECT_FALSE(ups::UpsModelDetector::detect(m_snmp, ini, m_model, m_error));
     EXPECT_TRUE(m_model.empty());
+    EXPECT_EQ(m_error,
+              "UPS model could not be detected\n"
+              "section [TEST]: invalid specification: modelName missing");
 }
 
 // Тест 3.2: Секция без OID имени модели пропускается
@@ -93,6 +98,9 @@ modelName = TEST_UPS
 
     EXPECT_FALSE(ups::UpsModelDetector::detect(m_snmp, ini, m_model, m_error));
     EXPECT_TRUE(m_model.empty());
+    EXPECT_EQ(m_error,
+              "UPS model could not be detected\n"
+              "section [TEST]: invalid specification: modelName.oid missing");
 }
 #endif
 
@@ -112,7 +120,9 @@ inputVoltage.normal = 200..240
 
     EXPECT_FALSE(ups::UpsModelDetector::detect(m_snmp, ini, m_model, m_error));
     EXPECT_TRUE(m_model.empty());
-    EXPECT_EQ(m_error, "SNMP request failed");
+    EXPECT_EQ(m_error,
+              "UPS model could not be detected\n"
+              "section [TEST]: SNMP request failed");
 }
 #endif
 
@@ -124,11 +134,17 @@ TEST_F(UpsModelDetectorTest, Detect_SnmpValueNotString_ReturnsError) {
 [TEST]
 modelName = TEST_UPS
 modelName.oid = 1.2.3
+
+inputVoltage.oid = 1.2.3.4
+inputVoltage.normal = 200..240
 )");
     m_snmp.set(snmp::Oid("1.2.3"), { true, makeIntValue(42), {} });
 
     EXPECT_FALSE(ups::UpsModelDetector::detect(m_snmp, ini, m_model, m_error));
     EXPECT_TRUE(m_model.empty());
+    EXPECT_EQ(m_error,
+              "UPS model could not be detected\n"
+              "section [TEST]: SNMP response is not a string");
 }
 #endif
 
@@ -140,11 +156,17 @@ TEST_F(UpsModelDetectorTest, Detect_ModelNameMismatch_ReturnsError) {
 [TEST]
 modelName = TEST_UPS
 modelName.oid = 1.2.3
+
+inputVoltage.oid = 1.2.3.4
+inputVoltage.normal = 200..240
 )");
     m_snmp.set(snmp::Oid("1.2.3"), { true, makeStringValue("OTHER_UPS"), {} });
 
     EXPECT_FALSE(ups::UpsModelDetector::detect(m_snmp, ini, m_model, m_error));
     EXPECT_TRUE(m_model.empty());
+    EXPECT_EQ(m_error,
+              "UPS model could not be detected\n"
+              "section [TEST]: model name does not match");
 }
 #endif
 
@@ -177,15 +199,61 @@ TEST_F(UpsModelDetectorTest, Detect_NoMatchingSection_ReturnsError) {
 modelName = A_UPS
 modelName.oid = 1.2.3
 
+inputVoltage.oid = 1.2.3.1
+inputVoltage.normal = 200..240
+
 [B]
 modelName = B_UPS
 modelName.oid = 1.2.4
+
+inputVoltage.oid = 1.2.4.1
+inputVoltage.normal = 200..240
 )");
     m_snmp.set(snmp::Oid("1.2.3"), { true, makeStringValue("X"), {} });
     m_snmp.set(snmp::Oid("1.2.4"), { true, makeStringValue("Y"), {} });
 
     EXPECT_FALSE(ups::UpsModelDetector::detect(m_snmp, ini, m_model, m_error));
     EXPECT_TRUE(m_model.empty());
-    EXPECT_EQ(m_error, "UPS model could not be detected");
+    EXPECT_EQ(m_error,
+              "UPS model could not be detected\n"
+              "section [A]: model name does not match\n"
+              "section [B]: model name does not match");
+}
+
+// Тест 8.2: В ошибку определения модели включаются причины по всем секциям
+TEST_F(UpsModelDetectorTest, Detect_SectionsRejectedForDifferentReasons_ReturnsAllErrors) {
+    const std::string ini = m_tempIniFiles.write(R"(
+[A]
+modelName = A_UPS
+modelName.oid = 1.2.3
+
+inputVoltage.oid = 1.2.3.1
+inputVoltage.normal = 200..240
+
+[B]
+modelName = B_UPS
+modelName.oid = 1.2.4
+
+inputVoltage.oid = 1.2.4.1
+inputVoltage.normal = 200..240
+
+[C]
+modelName = C_UPS
+modelName.oid = 1.2.5
+
+inputVoltage.oid = 1.2.5.1
+inputVoltage.normal = 200..240
+)");
+    m_snmp.set(snmp::Oid("1.2.3"), { false, {}, "SNMP response timeout" });
+    m_snmp.set(snmp::Oid("1.2.4"), { true, makeIntValue(42), {} });
+    m_snmp.set(snmp::Oid("1.2.5"), { true, makeStringValue("OTHER_UPS"), {} });
+
+    EXPECT_FALSE(ups::UpsModelDetector::detect(m_snmp, ini, m_model, m_error));
+    EXPECT_TRUE(m_model.empty());
+    EXPECT_EQ(m_error,
+              "UPS model could not be detected\n"
+              "section [A]: SNMP response timeout\n"
+              "section [B]: SNMP response is not a string\n"
+              "section [C]: model name does not match");
 }
 #endif

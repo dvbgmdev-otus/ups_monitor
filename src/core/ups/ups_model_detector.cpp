@@ -10,6 +10,22 @@
 #include "ups_model_spec.h"
 
 namespace ups {
+namespace {
+
+/**
+ * @brief Добавляет причину отклонения секции при определении модели UPS.
+ * @param errors [in/out] Накопленные причины ошибок определения модели.
+ * @param section Имя отклонённой секции модели.
+ * @param reason Причина отклонения секции.
+ */
+void appendError(ErrorMessage& errors, const std::string& section, const std::string& reason) {
+    if (!errors.empty()) {
+        errors += '\n';
+    }
+    errors += "section [" + section + "]: " + reason;
+}
+
+}  // namespace
 
 bool UpsModelDetector::detect(snmp::ISnmpClient& client,
                               const std::string& iniFile,
@@ -17,7 +33,7 @@ bool UpsModelDetector::detect(snmp::ISnmpClient& client,
                               ErrorMessage& err) {
     outModel.clear();
     err.clear();
-    ErrorMessage snmpErr;
+    ErrorMessage detectionErrors;
 
     // 1. Читаем список секций
     utils::IniSectionReader reader(iniFile);
@@ -28,9 +44,10 @@ bool UpsModelDetector::detect(snmp::ISnmpClient& client,
 
     // 2. Перебираем секции
     for (const auto& section : reader.sections()) {
+        // Загружаем спецификацию модели из секции
         UpsModelSpec spec;
         if (!spec.load(iniFile, section)) {
-            // некорректная секция — пропускаем
+            appendError(detectionErrors, section, "invalid specification: " + spec.lastError());
             continue;
         }
 
@@ -39,22 +56,33 @@ bool UpsModelDetector::detect(snmp::ISnmpClient& client,
 
         // делаем SNMP GET
         snmp::codec::SnmpValue value;
-        if (!client.get(nameOid, value, &snmpErr)) continue;
+        ErrorMessage requestError;
+        if (!client.get(nameOid, value, &requestError)) {
+            appendError(detectionErrors,
+                        section,
+                        requestError.empty() ? "SNMP request failed" : requestError);
+            continue;
+        }
 
         // ожидаем строковый ответ
-        if (value.type != snmp::codec::SnmpValue::Type::String) continue;
+        if (value.type != snmp::codec::SnmpValue::Type::String) {
+            appendError(detectionErrors, section, "SNMP response is not a string");
+            continue;
+        }
 
         if (value.strValue.find(expectedName) != std::string::npos) {
             outModel = section;
             return true;
         }
+
+        appendError(detectionErrors, section, "model name does not match");
     }
 
     // 3. если дошли сюда, значит ни одна секция не подошла
-    if (!snmpErr.empty()) {
-        err = snmpErr;
-    } else {
-        err = "UPS model could not be detected";
+    err = "UPS model could not be detected";
+    if (!detectionErrors.empty()) {
+        err += '\n';
+        err += detectionErrors;
     }
 
     return false;
