@@ -168,4 +168,57 @@ TEST_F(UpsParamCheckerTest, StringValue_ReturnsFalse) {
 
 #endif
 
+#if (1)  // Проверка накопления отклонений
+
+// Тест 5.1: Новое отклонение добавляется к ранее накопленному флагу
+TEST_F(UpsParamCheckerTest, Deviations_PreviousFlagPresent_AddsNewFlag) {
+    ups::UpsParamSpec spec;
+    spec.name = "batteryTemp";
+    spec.normal.isRange = true;
+    spec.normal.min = 0;
+    spec.normal.max = 50;
+    m_deviations = ups::UpsDeviationFlags::BATTERY_ALERT;
+
+    const bool ok = ups::UpsParamChecker::check(
+        spec, makeIntValue(80), ups::UpsDeviationFlags::TEMP_ALERT, m_deviations);
+
+    EXPECT_TRUE(ok);
+    EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::BATTERY_ALERT));
+    EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::TEMP_ALERT));
+}
+
+// Тест 5.2: Нормальное значение не очищает ранее накопленный флаг
+TEST_F(UpsParamCheckerTest, Deviations_NormalValue_PreservesPreviousFlag) {
+    ups::UpsParamSpec spec;
+    spec.name = "inputVoltage";
+    spec.normal.isRange = true;
+    spec.normal.min = 200;
+    spec.normal.max = 259;
+    m_deviations = ups::UpsDeviationFlags::BATTERY_ALERT;
+
+    const bool ok = ups::UpsParamChecker::check(
+        spec, makeIntValue(230), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::BATTERY_ALERT);
+}
+
+// Тест 5.3: Некорректный тип данных не изменяет ранее накопленный флаг
+TEST_F(UpsParamCheckerTest, Deviations_InvalidValue_PreservesPreviousFlag) {
+    ups::UpsParamSpec spec;
+    spec.name = "inputVoltage";
+    spec.normal.isRange = true;
+    spec.normal.min = 200;
+    spec.normal.max = 259;
+    m_deviations = ups::UpsDeviationFlags::BATTERY_ALERT;
+
+    const bool ok = ups::UpsParamChecker::check(
+        spec, makeStringValue("invalid"), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+
+    EXPECT_FALSE(ok);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::BATTERY_ALERT);
+}
+
+#endif
+
 }  // namespace
