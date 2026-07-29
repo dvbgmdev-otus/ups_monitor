@@ -6,6 +6,7 @@
 #include "ups_model_detector.h"
 
 #include "ini_section_reader.h"
+#include "snmp_client_iface.h"
 #include "snmp_codec_types.h"
 #include "ups_model_spec.h"
 

@@ -9,7 +9,10 @@
 #include <string>
 
 #include "ups_model_types.h"
-#include "snmp_client_iface.h"
+
+namespace snmp {
+class ISnmpClient;
+}
 
 namespace ups {
 
