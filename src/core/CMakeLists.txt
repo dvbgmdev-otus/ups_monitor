@@ -10,6 +10,7 @@ set(${CORE_SRC}
     ups/ups_model_spec.cpp
     ups/ups_model_types.cpp
     ups/ups_param_checker.cpp
+    ups/ups_state_poller.cpp
 )
 
 if(${CORE_SRC})
