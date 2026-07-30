@@ -103,6 +103,13 @@ add_unit_test(ups_state_poller_test
         ${CORE_NAME}
 )
 
+add_unit_test(ups_state_buffer_test
+    SOURCES
+        ${UNIT_TEST_DIR}/ups/ups_state_buffer_test.cpp
+    LIBRARIES
+        ${CORE_NAME}
+)
+
 add_unit_test(snmp_ber_test
     SOURCES
         ${UNIT_TEST_DIR}/snmp/ber/encode_primitives_test.cpp
