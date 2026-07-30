@@ -27,7 +27,7 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
         const bool isFailureParameter = isFailureCause(deviationFlag);
         bool hasParameterCondition = false;
 
-        // Шаг 1.0 SNMP GET
+        // Делаем SNMP GET
         snmp::codec::SnmpValue snmpValue;
         if (!client.get(parameterSpec.oid, snmpValue, nullptr)) {
             // SNMP GET завершился ошибкой
@@ -35,27 +35,13 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
         } else {
             // SNMP GET выполнен успешно, есть ответ от ИБП
             hasSuccessfulResponse = true;
-
-            // Проверка значения параметра
+            // Проверяем значение и накапливаем обнаруженные отклонения.
             UpsDeviationFlags parameterDeviations = UpsDeviationFlags::NONE;
             const bool isValueSupported =
                 UpsParamChecker::check(parameterSpec, snmpValue, parameterDeviations);
-
-            // аккумулируем флаги отклонений
             deviations |= parameterDeviations;
-
-            if (!isValueSupported) {
-                // Тип значения не поддерживается
-                hasParameterCondition = true;
-            }
-
-            // Анализ выхода за допуск
-            // UpsParamChecker::check() устанавливает бит в parameterDeviations,
-            // если параметр вышел за допустимые пределы
-            const bool hasDeviation = hasFlag(parameterDeviations, deviationFlag);
-            if (hasDeviation) {
-                hasParameterCondition = true;
-            }
+            const bool hasParameterDeviation = hasFlag(parameterDeviations, deviationFlag);
+            hasParameterCondition = !isValueSupported || hasParameterDeviation;
         }
 
         if (!hasParameterCondition) {
