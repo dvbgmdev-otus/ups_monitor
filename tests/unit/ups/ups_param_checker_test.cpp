@@ -9,6 +9,7 @@
  *  - обработка отсутствующих и некорректных данных
  *  - накопление отклонений
  *  - совместная проверка normal и bypass
+ *  - обработка отрицательных значений
  */
 
 #include "ups_param_checker.h"
@@ -283,6 +284,32 @@ TEST_F(UpsParamCheckerTest, NormalAndBypass_NormalOutsideBypass_NoDeviations) {
     spec.normal.max = 259;
     spec.bypass = { 180 };
     const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(230), m_deviations);
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
+}
+
+#endif
+
+#if (1)  // Часть 7 — Проверка отрицательных значений
+
+// Тест 7.1: Отрицательное значение не соответствует normal
+TEST_F(UpsParamCheckerTest, NegativeValue_NormalPresent_SetsParamDeviation) {
+    ups::UpsParamSpec spec;
+    spec.name = "batteryTemp";
+    spec.normal.isRange = true;
+    spec.normal.min = 0;
+    spec.normal.max = 50;
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(-1), m_deviations);
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::TEMP_ALERT);
+}
+
+// Тест 7.2: Отрицательное значение не включает байпас
+TEST_F(UpsParamCheckerTest, NegativeValue_BypassOnly_NoDeviations) {
+    ups::UpsParamSpec spec;
+    spec.name = "outputStatus";
+    spec.bypass = { 4294967295u };
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(-1), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }

@@ -24,6 +24,16 @@ bool UpsParamChecker::check(const UpsParamSpec& spec,
         return false;
     }
 
+    const bool hasNormal = spec.normal.isRange || !spec.normal.values.empty();
+    // Критерии normal и bypass беззнаковые, поэтому отрицательное значение
+    // не включает байпас и при наличии normal считается отклонением.
+    if (value.intValue < 0) {
+        if (hasNormal) {
+            deviations |= toDeviationFlag(spec.name);
+        }
+        return true;
+    }
+
     const uint32_t paramValue = static_cast<uint32_t>(value.intValue);
 
     // -------------------------------------------------
@@ -39,7 +49,6 @@ bool UpsParamChecker::check(const UpsParamSpec& spec,
     // -------------------------------------------------
     // 3. Проверка normal
     // -------------------------------------------------
-    const bool hasNormal = spec.normal.isRange || !spec.normal.values.empty();
     if (hasNormal) {
         bool inNormal = false;
         if (spec.normal.isRange) {
