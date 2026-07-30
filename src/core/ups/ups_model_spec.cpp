@@ -114,7 +114,12 @@ bool UpsModelSpec::load(const std::string& path,  // NOLINT(bugprone-easily-swap
             std::string error;
             if (!parseNormal(value, spec.normal, error)) {
                 spec.normal = NormalValueSpec{};
-                m_lastError = "invalid " + field + " for parameter " + paramName + ": " + error;
+                m_lastError = "invalid ";
+                m_lastError += field;
+                m_lastError += " for parameter ";
+                m_lastError += paramName;
+                m_lastError += ": ";
+                m_lastError += error;
                 return false;
             }
         } else if (field == "bypass") {
@@ -123,7 +128,12 @@ bool UpsModelSpec::load(const std::string& path,  // NOLINT(bugprone-easily-swap
             }
             std::string error;
             if (!parseEnumValues(value, spec.bypass, error)) {
-                m_lastError = "invalid " + field + " for parameter " + paramName + ": " + error;
+                m_lastError = "invalid ";
+                m_lastError += field;
+                m_lastError += " for parameter ";
+                m_lastError += paramName;
+                m_lastError += ": ";
+                m_lastError += error;
                 return false;
             }
         }
