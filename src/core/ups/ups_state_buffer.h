@@ -72,7 +72,7 @@ public:
     bool tryConsumeState(UpsState& out);
 
 private:
-    mutable std::mutex m_mutex;  ///< Мьютекс доступа к состоянию.
+    std::mutex m_mutex;          ///< Мьютекс доступа к состоянию.
     bool m_hasState{ false };    ///< Признак наличия непотреблённого состояния.
     UpsState m_state;            ///< Последнее полученное состояние UPS.
 };
