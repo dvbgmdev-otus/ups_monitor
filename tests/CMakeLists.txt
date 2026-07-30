@@ -95,6 +95,14 @@ add_unit_test(ups_model_detector_test
         ${CORE_NAME}
 )
 
+add_unit_test(ups_state_poller_test
+    SOURCES
+        ${UNIT_TEST_DIR}/temp_ini_file.cpp
+        ${UNIT_TEST_DIR}/ups/ups_state_poller_test.cpp
+    LIBRARIES
+        ${CORE_NAME}
+)
+
 add_unit_test(snmp_ber_test
     SOURCES
         ${UNIT_TEST_DIR}/snmp/ber/encode_primitives_test.cpp
