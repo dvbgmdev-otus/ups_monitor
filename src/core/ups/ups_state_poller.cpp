@@ -18,10 +18,9 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
     // =========================================================
     UpsDeviationFlags deviations = UpsDeviationFlags::NONE;  // битовая маска отклонений
 
-    bool hasSuccessfulResponse = false;  // есть хотя бы один валидный ответ
-    bool criticalFailure = false;        // критичный параметр вне допуска
-    bool criticalNoInfo = false;         // нет данных по критичному параметру
-    bool hasWarning = false;             // некритичный параметр вне допуска или NoInfo
+    bool hasSuccessfulResponse = false;  // есть хотя бы один успешный SNMP-ответ
+    bool hasFailureCondition = false;  // параметр, приводящий к Failure, недоступен или вне допуска
+    bool hasWarningCondition = false;  // некритичный параметр недоступен или вне допуска
 
     // =========================================================
     // Шаг 1. Перебор параметров модели
@@ -39,9 +38,9 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
         if (!client.get(parameterSpec.oid, snmpValue, nullptr)) {
             // Нет данных (NoInfo)
             if (isFailureParameter) {
-                criticalNoInfo = true;
+                hasFailureCondition = true;
             } else {
-                hasWarning = true;
+                hasWarningCondition = true;
             }
             continue;
         }
@@ -52,7 +51,8 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
         // Шаг 3. Проверка наличия параметра
         // -----------------------------------------------------
         UpsDeviationFlags parameterDeviations = UpsDeviationFlags::NONE;
-        const bool isValueSupported = UpsParamChecker::check(parameterSpec, snmpValue, parameterDeviations);
+        const bool isValueSupported =
+            UpsParamChecker::check(parameterSpec, snmpValue, parameterDeviations);
 
         // аккумулируем диагностические биты
         deviations |= parameterDeviations;
@@ -60,9 +60,9 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
         if (!isValueSupported) {
             // Данные не получены или невалидны (NoInfo)
             if (isFailureParameter) {
-                criticalNoInfo = true;
+                hasFailureCondition = true;
             } else {
-                hasWarning = true;
+                hasWarningCondition = true;
             }
             continue;
         }
@@ -76,9 +76,9 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
 
         if (hasDeviation) {
             if (isFailureParameter) {
-                criticalFailure = true;
+                hasFailureCondition = true;
             } else {
-                hasWarning = true;
+                hasWarningCondition = true;
             }
         }
     }
@@ -90,9 +90,9 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
 
     if (!hasSuccessfulResponse) {
         status = UpsStatus::NO_INFO;
-    } else if (criticalFailure || criticalNoInfo) {
+    } else if (hasFailureCondition) {
         status = UpsStatus::FAILURE;
-    } else if (hasWarning) {
+    } else if (hasWarningCondition) {
         status = UpsStatus::WARNING;
     } else {
         status = UpsStatus::OK;
