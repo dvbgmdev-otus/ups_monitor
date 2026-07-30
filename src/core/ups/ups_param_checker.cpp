@@ -21,37 +21,39 @@ bool UpsParamChecker::check(const UpsParamSpec& spec,
     // 1. Проверка наличия и типа данных
     // -------------------------------------------------
     if (value.type != snmp::codec::SnmpValue::Type::Integer) {
-        // Нет данных или тип невалиден
+        // Нет данных или тип не поддерживается
         return false;
     }
 
-    const uint32_t v = static_cast<uint32_t>(value.intValue);
+    const uint32_t paramValue = static_cast<uint32_t>(value.intValue);
 
     // -------------------------------------------------
     // 2. Проверка bypass
     // -------------------------------------------------
     if (!spec.bypass.empty()) {
-        auto it = std::find(spec.bypass.begin(), spec.bypass.end(), v);
+        const auto it = std::find(spec.bypass.begin(), spec.bypass.end(), paramValue);
         if (it != spec.bypass.end()) {
             deviations |= UpsDeviationFlags::BYPASS_ALERT;
         }
-        return true;
     }
 
     // -------------------------------------------------
     // 3. Проверка normal
     // -------------------------------------------------
-    bool inNormal = false;
+    const bool hasNormal = spec.normal.isRange || !spec.normal.values.empty();
+    if (hasNormal) {
+        bool inNormal = false;
+        if (spec.normal.isRange) {
+            inNormal = paramValue >= spec.normal.min && paramValue <= spec.normal.max;
+        } else {
+            inNormal = std::find(spec.normal.values.begin(),
+                                 spec.normal.values.end(),
+                                 paramValue) != spec.normal.values.end();
+        }
 
-    if (spec.normal.isRange) {
-        inNormal = (v >= spec.normal.min && v <= spec.normal.max);
-    } else {
-        inNormal = std::find(spec.normal.values.begin(), spec.normal.values.end(), v) !=
-                   spec.normal.values.end();
-    }
-
-    if (!inNormal) {
-        deviations |= deviation;
+        if (!inNormal) {
+            deviations |= deviation;
+        }
     }
 
     return true;

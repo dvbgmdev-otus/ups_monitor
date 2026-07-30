@@ -8,6 +8,7 @@
  *  - определение режима байпаса
  *  - обработка отсутствующих и некорректных данных
  *  - накопление отклонений
+ *  - совместная проверка normal и bypass
  */
 
 #include "ups_param_checker.h"
@@ -84,6 +85,32 @@ TEST_F(UpsParamCheckerTest, BypassValue_NotInBypass_Ok) {
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
 
+// Тест 1.4: Значение на нижней границе диапазона считается допустимым
+TEST_F(UpsParamCheckerTest, NormalRange_ValueEqualsMin_Ok) {
+    ups::UpsParamSpec spec;
+    spec.name = "inputVoltage";
+    spec.normal.isRange = true;
+    spec.normal.min = 200;
+    spec.normal.max = 259;
+    const bool ok = ups::UpsParamChecker::check(
+        spec, makeIntValue(200), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
+}
+
+// Тест 1.5: Значение на верхней границе диапазона считается допустимым
+TEST_F(UpsParamCheckerTest, NormalRange_ValueEqualsMax_Ok) {
+    ups::UpsParamSpec spec;
+    spec.name = "inputVoltage";
+    spec.normal.isRange = true;
+    spec.normal.min = 200;
+    spec.normal.max = 259;
+    const bool ok = ups::UpsParamChecker::check(
+        spec, makeIntValue(259), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
+}
+
 #endif
 
 #if (1)  // Часть 2 — Проверка выхода за допустимые значения
@@ -112,6 +139,17 @@ TEST_F(UpsParamCheckerTest, OutputVoltage_OutOfRange_SetsFailure) {
         spec, makeIntValue(180), ups::UpsDeviationFlags::OUTPUT_FAILURE, m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::OUTPUT_FAILURE));
+}
+
+// Тест 2.3: Значение вне перечисления устанавливает предупреждающий флаг
+TEST_F(UpsParamCheckerTest, NormalEnum_ValueNotInEnum_SetsAlert) {
+    ups::UpsParamSpec spec;
+    spec.name = "batteryStatus";
+    spec.normal.values = { 2, 3 };
+    const bool ok = ups::UpsParamChecker::check(
+        spec, makeIntValue(1), ups::UpsDeviationFlags::BATTERY_ALERT, m_deviations);
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::BATTERY_ALERT);
 }
 
 #endif
@@ -204,6 +242,67 @@ TEST_F(UpsParamCheckerTest, Deviations_InvalidValue_PreservesPreviousFlag) {
         spec, makeStringValue("invalid"), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
     EXPECT_FALSE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::BATTERY_ALERT);
+}
+
+#endif
+
+#if (1)  // Часть 6 — Совместная проверка normal и bypass
+
+// Тест 6.1: Значение в норме, байпас включён — устанавливается только флаг байпаса
+TEST_F(UpsParamCheckerTest, NormalAndBypass_ValueMatchesBoth_SetsBypassAlert) {
+    ups::UpsParamSpec spec;
+    spec.name = "inputVoltage";
+    spec.normal.isRange = true;
+    spec.normal.min = 200;
+    spec.normal.max = 259;
+    spec.bypass = { 230 };
+    const bool ok = ups::UpsParamChecker::check(
+        spec, makeIntValue(230), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::BYPASS_ALERT);
+}
+
+// Тест 6.2: Значение вне нормы, байпас выключен — устанавливается только флаг параметра
+TEST_F(UpsParamCheckerTest, NormalAndBypass_ValueMatchesNeither_SetsParamDeviation) {
+    ups::UpsParamSpec spec;
+    spec.name = "inputVoltage";
+    spec.normal.isRange = true;
+    spec.normal.min = 200;
+    spec.normal.max = 259;
+    spec.bypass = { 230 };
+    const bool ok = ups::UpsParamChecker::check(
+        spec, makeIntValue(180), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::INPUT_ALERT);
+}
+
+// Тест 6.3: Значение вне нормы, байпас включён — устанавливаются оба флага
+TEST_F(UpsParamCheckerTest, NormalAndBypass_BypassOutsideNormal_SetsBothDeviations) {
+    ups::UpsParamSpec spec;
+    spec.name = "inputVoltage";
+    spec.normal.isRange = true;
+    spec.normal.min = 200;
+    spec.normal.max = 259;
+    spec.bypass = { 180 };
+    const bool ok = ups::UpsParamChecker::check(
+        spec, makeIntValue(180), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    EXPECT_TRUE(ok);
+    EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::BYPASS_ALERT));
+    EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::INPUT_ALERT));
+}
+
+// Тест 6.4: Значение в норме, байпас выключен — флаги не устанавливаются
+TEST_F(UpsParamCheckerTest, NormalAndBypass_NormalOutsideBypass_NoDeviations) {
+    ups::UpsParamSpec spec;
+    spec.name = "inputVoltage";
+    spec.normal.isRange = true;
+    spec.normal.min = 200;
+    spec.normal.max = 259;
+    spec.bypass = { 180 };
+    const bool ok = ups::UpsParamChecker::check(
+        spec, makeIntValue(230), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
 
 #endif
