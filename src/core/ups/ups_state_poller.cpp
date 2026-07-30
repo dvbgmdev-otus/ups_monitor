@@ -16,55 +16,53 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
     // =========================================================
     // Шаг 0. Инициализация
     // =========================================================
-    UpsDeviationFlags descr = UpsDeviationFlags::NONE;  // битовая маска отклонений
+    UpsDeviationFlags deviations = UpsDeviationFlags::NONE;  // битовая маска отклонений
 
-    bool anyValid = false;         // есть хотя бы один валидный ответ
-    bool criticalFailure = false;  // критичный параметр вне допуска
-    bool criticalNoInfo = false;   // нет данных по критичному параметру
-    bool warningPresent = false;   // некритичный параметр вне допуска или NoInfo
+    bool hasSuccessfulResponse = false;  // есть хотя бы один валидный ответ
+    bool criticalFailure = false;        // критичный параметр вне допуска
+    bool criticalNoInfo = false;         // нет данных по критичному параметру
+    bool hasWarning = false;             // некритичный параметр вне допуска или NoInfo
 
     // =========================================================
     // Шаг 1. Перебор параметров модели
     // =========================================================
-    const auto& params = spec.parameters();
+    for (const auto& parameter : spec.parameters()) {
+        const UpsParamSpec& parameterSpec = parameter.second;
 
-    for (const auto& kv : params) {
-        const UpsParamSpec& paramSpec = kv.second;
-
-        const UpsDeviationFlags desc = toDeviationFlag(paramSpec.name);
-        const bool isCritical = isFailureCause(desc);
+        const UpsDeviationFlags deviationFlag = toDeviationFlag(parameterSpec.name);
+        const bool isFailureParameter = isFailureCause(deviationFlag);
 
         // -----------------------------------------------------
         // Шаг 2. SNMP GET
         // -----------------------------------------------------
-        snmp::codec::SnmpValue value;
-        if (!client.get(paramSpec.oid, value, nullptr)) {
+        snmp::codec::SnmpValue snmpValue;
+        if (!client.get(parameterSpec.oid, snmpValue, nullptr)) {
             // Нет данных (NoInfo)
-            if (isCritical) {
+            if (isFailureParameter) {
                 criticalNoInfo = true;
             } else {
-                warningPresent = true;
+                hasWarning = true;
             }
             continue;
         }
 
-        anyValid = true;
+        hasSuccessfulResponse = true;
 
         // -----------------------------------------------------
         // Шаг 3. Проверка наличия параметра
         // -----------------------------------------------------
-        UpsDeviationFlags paramDescr = UpsDeviationFlags::NONE;
-        const bool hasData = UpsParamChecker::check(paramSpec, value, paramDescr);
+        UpsDeviationFlags parameterDeviations = UpsDeviationFlags::NONE;
+        const bool isValueSupported = UpsParamChecker::check(parameterSpec, snmpValue, parameterDeviations);
 
         // аккумулируем диагностические биты
-        descr |= paramDescr;
+        deviations |= parameterDeviations;
 
-        if (!hasData) {
+        if (!isValueSupported) {
             // Данные не получены или невалидны (NoInfo)
-            if (isCritical) {
+            if (isFailureParameter) {
                 criticalNoInfo = true;
             } else {
-                warningPresent = true;
+                hasWarning = true;
             }
             continue;
         }
@@ -72,16 +70,15 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
         // -----------------------------------------------------
         // Шаг 4. Анализ выхода за допуск
         // -----------------------------------------------------
-        // UpsParamChecker::check() устанавливает бит в paramDescr,
+        // UpsParamChecker::check() устанавливает бит в parameterDeviations,
         // если параметр вышел за допустимые пределы
-        const UpsDeviationFlags descBit = desc;
-        const bool isOutOfRange = (paramDescr & descBit) != UpsDeviationFlags::NONE;
+        const bool hasDeviation = (parameterDeviations & deviationFlag) != UpsDeviationFlags::NONE;
 
-        if (isOutOfRange) {
-            if (isCritical) {
+        if (hasDeviation) {
+            if (isFailureParameter) {
                 criticalFailure = true;
             } else {
-                warningPresent = true;
+                hasWarning = true;
             }
         }
     }
@@ -91,11 +88,11 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
     // =========================================================
     UpsStatus status = UpsStatus::OK;
 
-    if (!anyValid) {
+    if (!hasSuccessfulResponse) {
         status = UpsStatus::NO_INFO;
     } else if (criticalFailure || criticalNoInfo) {
         status = UpsStatus::FAILURE;
-    } else if (warningPresent) {
+    } else if (hasWarning) {
         status = UpsStatus::WARNING;
     } else {
         status = UpsStatus::OK;
@@ -106,7 +103,7 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
     // =========================================================
     UpsState outputState;
     outputState.status = status;
-    outputState.deviations = descr;
+    outputState.deviations = deviations;
     return outputState;
 }
 
