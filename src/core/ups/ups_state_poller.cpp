@@ -36,7 +36,7 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
         // -----------------------------------------------------
         snmp::codec::SnmpValue snmpValue;
         if (!client.get(parameterSpec.oid, snmpValue, nullptr)) {
-            // Нет данных (NoInfo)
+            // SNMP GET завершился ошибкой
             if (isFailureParameter) {
                 hasFailureCondition = true;
             } else {
@@ -48,17 +48,17 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
         hasSuccessfulResponse = true;
 
         // -----------------------------------------------------
-        // Шаг 3. Проверка наличия параметра
+        // Шаг 3. Проверка значения параметра
         // -----------------------------------------------------
         UpsDeviationFlags parameterDeviations = UpsDeviationFlags::NONE;
         const bool isValueSupported =
             UpsParamChecker::check(parameterSpec, snmpValue, parameterDeviations);
 
-        // аккумулируем диагностические биты
+        // аккумулируем флаги отклонений
         deviations |= parameterDeviations;
 
         if (!isValueSupported) {
-            // Данные не получены или невалидны (NoInfo)
+            // Тип значения не поддерживается
             if (isFailureParameter) {
                 hasFailureCondition = true;
             } else {
@@ -101,10 +101,10 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
     // =========================================================
     // Шаг 6. Возврат состояния
     // =========================================================
-    UpsState outputState;
-    outputState.status = status;
-    outputState.deviations = deviations;
-    return outputState;
+    UpsState state;
+    state.status = status;
+    state.deviations = deviations;
+    return state;
 }
 
 }  // namespace ups
