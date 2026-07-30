@@ -11,10 +11,9 @@ namespace ups {
 
 bool UpsParamChecker::check(const UpsParamSpec& spec,
                             const snmp::codec::SnmpValue& value,
-                            UpsDeviationFlags deviation,
                             UpsDeviationFlags& deviations) {
-    // UpsDeviationFlags::NONE здесь логически недопустим
-    // считаем, что контракт соблюдён
+    // Спецификация с неизвестным именем параметра здесь логически недопустима
+    // считаем, что контракт соблюдён и toDeviationFlag() не вернёт NONE
     // при желании можно добавить assert
 
     // -------------------------------------------------
@@ -52,7 +51,7 @@ bool UpsParamChecker::check(const UpsParamSpec& spec,
         }
 
         if (!inNormal) {
-            deviations |= deviation;
+            deviations |= toDeviationFlag(spec.name);
         }
     }
 

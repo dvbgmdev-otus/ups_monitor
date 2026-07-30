@@ -27,19 +27,18 @@ public:
      *
      * @param spec       Спецификация параметра (нормы, bypass и т.д.)
      * @param value      Значение, полученное по SNMP
-     * @param deviation  Диагностический флаг, который нужно установить
-     *                   при выходе параметра за допустимые пределы
-     *                   (НЕ может быть UpsDeviationFlags::NONE)
      * @param deviations [in/out] Флаги отклонений состояния UPS
      *
      * @return true Значение имеет поддерживаемый для параметра тип
      *              и проверено по заданным критериям.
      * @return false Значение невозможно проверить; флаги отклонений
      *               не изменяются.
+     *
+     * @pre Спецификация прошла UpsModelSpec::validate(),
+     *      имя параметра поддерживается.
      */
     static bool check(const UpsParamSpec& spec,
                       const snmp::codec::SnmpValue& value,
-                      UpsDeviationFlags deviation,
                       UpsDeviationFlags& deviations);
 };
 

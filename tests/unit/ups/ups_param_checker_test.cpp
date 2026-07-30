@@ -57,8 +57,7 @@ TEST_F(UpsParamCheckerTest, NormalRange_ValueInRange_Ok) {
     spec.normal.isRange = true;
     spec.normal.min = 200;
     spec.normal.max = 259;
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(230), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(230), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
@@ -68,8 +67,7 @@ TEST_F(UpsParamCheckerTest, NormalEnum_ValueInEnum_Ok) {
     ups::UpsParamSpec spec;
     spec.name = "batteryStatus";
     spec.normal.values = { 2, 3 };
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(2), ups::UpsDeviationFlags::BATTERY_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(2), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
@@ -79,8 +77,7 @@ TEST_F(UpsParamCheckerTest, BypassValue_NotInBypass_Ok) {
     ups::UpsParamSpec spec;
     spec.name = "outputStatus";
     spec.bypass = { 6, 9, 10 };
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(0), ups::UpsDeviationFlags::BYPASS_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(0), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
@@ -92,8 +89,7 @@ TEST_F(UpsParamCheckerTest, NormalRange_ValueEqualsMin_Ok) {
     spec.normal.isRange = true;
     spec.normal.min = 200;
     spec.normal.max = 259;
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(200), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(200), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
@@ -105,8 +101,7 @@ TEST_F(UpsParamCheckerTest, NormalRange_ValueEqualsMax_Ok) {
     spec.normal.isRange = true;
     spec.normal.min = 200;
     spec.normal.max = 259;
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(259), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(259), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
@@ -122,8 +117,7 @@ TEST_F(UpsParamCheckerTest, NormalRange_ValueOutOfRange_SetsAlert) {
     spec.normal.isRange = true;
     spec.normal.min = 0;
     spec.normal.max = 50;
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(80), ups::UpsDeviationFlags::TEMP_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(80), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::TEMP_ALERT));
 }
@@ -135,8 +129,7 @@ TEST_F(UpsParamCheckerTest, OutputVoltage_OutOfRange_SetsFailure) {
     spec.normal.isRange = true;
     spec.normal.min = 200;
     spec.normal.max = 259;
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(180), ups::UpsDeviationFlags::OUTPUT_FAILURE, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(180), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::OUTPUT_FAILURE));
 }
@@ -146,8 +139,7 @@ TEST_F(UpsParamCheckerTest, NormalEnum_ValueNotInEnum_SetsAlert) {
     ups::UpsParamSpec spec;
     spec.name = "batteryStatus";
     spec.normal.values = { 2, 3 };
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(1), ups::UpsDeviationFlags::BATTERY_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(1), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::BATTERY_ALERT);
 }
@@ -161,8 +153,7 @@ TEST_F(UpsParamCheckerTest, BypassValue_SetsBypassAlert) {
     ups::UpsParamSpec spec;
     spec.name = "outputStatus";
     spec.bypass = { 6, 9, 10 };
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(6), ups::UpsDeviationFlags::BYPASS_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(6), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::BYPASS_ALERT));
 }
@@ -178,8 +169,7 @@ TEST_F(UpsParamCheckerTest, NullValue_ReturnsFalse) {
     spec.normal.isRange = true;
     spec.normal.min = 200;
     spec.normal.max = 259;
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeNullValue(), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeNullValue(), m_deviations);
     EXPECT_FALSE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
@@ -191,8 +181,7 @@ TEST_F(UpsParamCheckerTest, StringValue_ReturnsFalse) {
     spec.normal.isRange = true;
     spec.normal.min = 200;
     spec.normal.max = 259;
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeStringValue("invalid"), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeStringValue("invalid"), m_deviations);
     EXPECT_FALSE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
@@ -209,8 +198,7 @@ TEST_F(UpsParamCheckerTest, Deviations_PreviousFlagPresent_AddsNewFlag) {
     spec.normal.min = 0;
     spec.normal.max = 50;
     m_deviations = ups::UpsDeviationFlags::BATTERY_ALERT;
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(80), ups::UpsDeviationFlags::TEMP_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(80), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::BATTERY_ALERT));
     EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::TEMP_ALERT));
@@ -224,8 +212,7 @@ TEST_F(UpsParamCheckerTest, Deviations_NormalValue_PreservesPreviousFlag) {
     spec.normal.min = 200;
     spec.normal.max = 259;
     m_deviations = ups::UpsDeviationFlags::BATTERY_ALERT;
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(230), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(230), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::BATTERY_ALERT);
 }
@@ -238,8 +225,7 @@ TEST_F(UpsParamCheckerTest, Deviations_InvalidValue_PreservesPreviousFlag) {
     spec.normal.min = 200;
     spec.normal.max = 259;
     m_deviations = ups::UpsDeviationFlags::BATTERY_ALERT;
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeStringValue("invalid"), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeStringValue("invalid"), m_deviations);
     EXPECT_FALSE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::BATTERY_ALERT);
 }
@@ -256,8 +242,7 @@ TEST_F(UpsParamCheckerTest, NormalAndBypass_ValueMatchesBoth_SetsBypassAlert) {
     spec.normal.min = 200;
     spec.normal.max = 259;
     spec.bypass = { 230 };
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(230), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(230), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::BYPASS_ALERT);
 }
@@ -270,8 +255,7 @@ TEST_F(UpsParamCheckerTest, NormalAndBypass_ValueMatchesNeither_SetsParamDeviati
     spec.normal.min = 200;
     spec.normal.max = 259;
     spec.bypass = { 230 };
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(180), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(180), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::INPUT_ALERT);
 }
@@ -284,8 +268,7 @@ TEST_F(UpsParamCheckerTest, NormalAndBypass_BypassOutsideNormal_SetsBothDeviatio
     spec.normal.min = 200;
     spec.normal.max = 259;
     spec.bypass = { 180 };
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(180), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(180), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::BYPASS_ALERT));
     EXPECT_TRUE(ups::hasFlag(m_deviations, ups::UpsDeviationFlags::INPUT_ALERT));
@@ -299,8 +282,7 @@ TEST_F(UpsParamCheckerTest, NormalAndBypass_NormalOutsideBypass_NoDeviations) {
     spec.normal.min = 200;
     spec.normal.max = 259;
     spec.bypass = { 180 };
-    const bool ok = ups::UpsParamChecker::check(
-        spec, makeIntValue(230), ups::UpsDeviationFlags::INPUT_ALERT, m_deviations);
+    const bool ok = ups::UpsParamChecker::check(spec, makeIntValue(230), m_deviations);
     EXPECT_TRUE(ok);
     EXPECT_EQ(m_deviations, ups::UpsDeviationFlags::NONE);
 }
