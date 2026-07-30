@@ -34,6 +34,7 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
         const UpsParamSpec& parameterSpec = parameter.second;
         const UpsDeviationFlags deviationFlag = toDeviationFlag(parameterSpec.name);
         const bool isFailureParameter = isFailureCause(deviationFlag);
+        bool hasParameterCondition = false;
 
         // -----------------------------------------------------
         // Шаг 1.0 SNMP GET
@@ -41,49 +42,45 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
         snmp::codec::SnmpValue snmpValue;
         if (!client.get(parameterSpec.oid, snmpValue, nullptr)) {
             // SNMP GET завершился ошибкой
-            if (isFailureParameter) {
-                hasFailureCondition = true;
-            } else {
-                hasWarningCondition = true;
+            hasParameterCondition = true;
+        } else {
+            hasSuccessfulResponse = true;
+
+            // -----------------------------------------------------
+            // Шаг 1.1 Проверка значения параметра
+            // -----------------------------------------------------
+            UpsDeviationFlags parameterDeviations = UpsDeviationFlags::NONE;
+            const bool isValueSupported =
+                UpsParamChecker::check(parameterSpec, snmpValue, parameterDeviations);
+
+            // аккумулируем флаги отклонений
+            deviations |= parameterDeviations;
+
+            if (!isValueSupported) {
+                // Тип значения не поддерживается
+                hasParameterCondition = true;
             }
+
+            // -----------------------------------------------------
+            // Шаг 1.2 Анализ выхода за допуск
+            // -----------------------------------------------------
+            // UpsParamChecker::check() устанавливает бит в parameterDeviations,
+            // если параметр вышел за допустимые пределы
+            const bool hasDeviation = hasFlag(parameterDeviations, deviationFlag);
+
+            if (hasDeviation) {
+                hasParameterCondition = true;
+            }
+        }
+
+        if (!hasParameterCondition) {
             continue;
         }
 
-        hasSuccessfulResponse = true;
-
-        // -----------------------------------------------------
-        // Шаг 1.1 Проверка значения параметра
-        // -----------------------------------------------------
-        UpsDeviationFlags parameterDeviations = UpsDeviationFlags::NONE;
-        const bool isValueSupported =
-            UpsParamChecker::check(parameterSpec, snmpValue, parameterDeviations);
-
-        // аккумулируем флаги отклонений
-        deviations |= parameterDeviations;
-
-        if (!isValueSupported) {
-            // Тип значения не поддерживается
-            if (isFailureParameter) {
-                hasFailureCondition = true;
-            } else {
-                hasWarningCondition = true;
-            }
-            continue;
-        }
-
-        // -----------------------------------------------------
-        // Шаг 1.2 Анализ выхода за допуск
-        // -----------------------------------------------------
-        // UpsParamChecker::check() устанавливает бит в parameterDeviations,
-        // если параметр вышел за допустимые пределы
-        const bool hasDeviation = hasFlag(parameterDeviations, deviationFlag);
-
-        if (hasDeviation) {
-            if (isFailureParameter) {
-                hasFailureCondition = true;
-            } else {
-                hasWarningCondition = true;
-            }
+        if (isFailureParameter) {
+            hasFailureCondition = true;
+        } else {
+            hasWarningCondition = true;
         }
     }
 
