@@ -20,14 +20,14 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
 
     bool hasSuccessfulResponse = false;  // есть хотя бы один успешный SNMP-ответ
     bool hasFailureCondition = false;  // параметр, приводящий к Failure, недоступен или вне допуска
-    bool hasWarningCondition = false;  // некритичный параметр недоступен или вне допуска
+    bool hasWarningCondition =
+        false;  // параметр, не приводящий к Failure, недоступен или вне допуска
 
     // =========================================================
     // Шаг 1. Перебор параметров модели
     // =========================================================
     for (const auto& parameter : spec.parameters()) {
         const UpsParamSpec& parameterSpec = parameter.second;
-
         const UpsDeviationFlags deviationFlag = toDeviationFlag(parameterSpec.name);
         const bool isFailureParameter = isFailureCause(deviationFlag);
 
@@ -72,7 +72,7 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
         // -----------------------------------------------------
         // UpsParamChecker::check() устанавливает бит в parameterDeviations,
         // если параметр вышел за допустимые пределы
-        const bool hasDeviation = (parameterDeviations & deviationFlag) != UpsDeviationFlags::NONE;
+        const bool hasDeviation = hasFlag(parameterDeviations, deviationFlag);
 
         if (hasDeviation) {
             if (isFailureParameter) {
