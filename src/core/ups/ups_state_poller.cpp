@@ -1,7 +1,7 @@
 /**
  * @file ups_state_poller.cpp
  * @ingroup ups
- * @brief Реализация опроса состояния UPS по SNMP-данным.
+ * @brief Реализация опроса состояния ИБП по SNMP-данным.
  */
 #include "ups_state_poller.h"
 
@@ -18,10 +18,14 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
     // =========================================================
     UpsDeviationFlags deviations = UpsDeviationFlags::NONE;  // битовая маска отклонений
 
-    bool hasSuccessfulResponse = false;  // есть хотя бы один успешный SNMP-ответ
-    bool hasFailureCondition = false;  // параметр, приводящий к Failure, недоступен или вне допуска
-    bool hasWarningCondition =
-        false;  // параметр, не приводящий к Failure, недоступен или вне допуска
+    // Есть хотя бы один успешный SNMP-ответ.
+    bool hasSuccessfulResponse = false;
+
+    // Обнаружена проблема параметра, приводящего к Failure.
+    bool hasFailureCondition = false;
+
+    // Обнаружена проблема параметра, не приводящего к Failure.
+    bool hasWarningCondition = false;
 
     // =========================================================
     // Шаг 1. Перебор параметров модели
@@ -32,7 +36,7 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
         const bool isFailureParameter = isFailureCause(deviationFlag);
 
         // -----------------------------------------------------
-        // Шаг 2. SNMP GET
+        // Шаг 1.0 SNMP GET
         // -----------------------------------------------------
         snmp::codec::SnmpValue snmpValue;
         if (!client.get(parameterSpec.oid, snmpValue, nullptr)) {
@@ -48,7 +52,7 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
         hasSuccessfulResponse = true;
 
         // -----------------------------------------------------
-        // Шаг 3. Проверка значения параметра
+        // Шаг 1.1 Проверка значения параметра
         // -----------------------------------------------------
         UpsDeviationFlags parameterDeviations = UpsDeviationFlags::NONE;
         const bool isValueSupported =
@@ -68,7 +72,7 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
         }
 
         // -----------------------------------------------------
-        // Шаг 4. Анализ выхода за допуск
+        // Шаг 1.2 Анализ выхода за допуск
         // -----------------------------------------------------
         // UpsParamChecker::check() устанавливает бит в parameterDeviations,
         // если параметр вышел за допустимые пределы
@@ -84,7 +88,7 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
     }
 
     // =========================================================
-    // Шаг 5. Формирование итогового статуса
+    // Шаг 2. Формирование итогового статуса
     // =========================================================
     UpsStatus status = UpsStatus::OK;
 
@@ -99,7 +103,7 @@ UpsState UpsStatePoller::poll(const UpsModelSpec& spec, snmp::ISnmpClient& clien
     }
 
     // =========================================================
-    // Шаг 6. Возврат состояния
+    // Шаг 3. Возврат состояния
     // =========================================================
     UpsState state;
     state.status = status;
