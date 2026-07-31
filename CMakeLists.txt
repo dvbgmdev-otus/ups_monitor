@@ -37,6 +37,7 @@ if(1) # COVERAGE CONFIG BLOCK
         ${SRC_DIR}/core/ups/ups_model_detector.cpp
         ${SRC_DIR}/core/ups/ups_model_spec.cpp
         ${SRC_DIR}/core/ups/ups_model_types.cpp
+        ${SRC_DIR}/core/ups/ups_monitor.cpp
         ${SRC_DIR}/core/ups/ups_param_checker.cpp
         ${SRC_DIR}/core/ups/ups_state_buffer.cpp
         ${SRC_DIR}/core/ups/ups_state_poller.cpp
