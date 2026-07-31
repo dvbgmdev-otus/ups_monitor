@@ -12,9 +12,7 @@
 #include "snmp_client.h"
 #include "ups_model_detector.h"
 
-UpsMonitor::~UpsMonitor() {
-    stop();
-}
+UpsMonitor::~UpsMonitor() { stop(); }
 
 void UpsMonitor::stop() {
     m_running.store(false);
@@ -73,8 +71,10 @@ bool UpsMonitor::tryConsumeState(ups::UpsState& state) {
     return m_stateBuffer.tryConsumeState(state);
 }
 
+const std::string& UpsMonitor::modelName() const { return m_modelSpec.modelName(); }
+
 std::unique_ptr<snmp::ISnmpClient> UpsMonitor::createSnmpClient(const std::string& ip,
-                                                               uint16_t port) {
+                                                                uint16_t port) {
     return std::unique_ptr<snmp::ISnmpClient>(new snmp::SnmpClient(ip, port));
 }
 

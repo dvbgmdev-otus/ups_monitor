@@ -154,3 +154,29 @@ TEST_F(UpsMonitorTest, Init_AfterFailedInit_CanSucceed) {
 }
 
 #endif
+
+#if (1)  // Part 6 — Имя модели
+
+// Test 6.1: До успешной инициализации имя модели пустое
+TEST_F(UpsMonitorTest, ModelName_NotInitialized_ReturnsEmptyString) {
+    EXPECT_TRUE(m_monitor.modelName().empty());
+}
+
+// Test 6.2: После успешной инициализации возвращается имя обнаруженной модели
+TEST_F(UpsMonitorTest, ModelName_Initialized_ReturnsDetectedModelName) {
+    prepareValidModelResponse();
+    ups::ErrorMessage error;
+    ASSERT_TRUE(m_monitor.init("127.0.0.1", 161, error));
+    EXPECT_EQ(m_monitor.modelName(), "MP3000RT");
+}
+
+// Test 6.3: После остановки имя обнаруженной модели остаётся доступным
+TEST_F(UpsMonitorTest, ModelName_AfterStop_ReturnsDetectedModelName) {
+    prepareValidModelResponse();
+    ups::ErrorMessage error;
+    ASSERT_TRUE(m_monitor.init("127.0.0.1", 161, error));
+    m_monitor.stop();
+    EXPECT_EQ(m_monitor.modelName(), "MP3000RT");
+}
+
+#endif

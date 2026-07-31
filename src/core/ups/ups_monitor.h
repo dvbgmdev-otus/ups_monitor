@@ -62,6 +62,12 @@ public:
      */
     bool tryConsumeState(ups::UpsState& state);
 
+    /**
+     * @brief Возвращает имя обнаруженной модели UPS.
+     * @return Имя модели или пустая строка до успешной инициализации.
+     */
+    const std::string& modelName() const;
+
 protected:
     /**
      * @brief Создаёт SNMP-клиент для указанного IP-адреса.
