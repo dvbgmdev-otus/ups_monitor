@@ -7,6 +7,7 @@
 #define UPS_MONITOR_H
 
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <thread>
@@ -62,9 +63,11 @@ protected:
     /**
      * @brief Создаёт SNMP-клиент для указанного IP-адреса.
      * @param ip IP-адрес UPS.
+     * @param port UDP-порт SNMP-агента.
      * @return Экземпляр SNMP-клиента.
      */
-    virtual std::unique_ptr<snmp::ISnmpClient> createSnmpClient(const std::string& ip);
+    virtual std::unique_ptr<snmp::ISnmpClient> createSnmpClient(const std::string& ip,
+                                                                uint16_t port);
 
     ups::UpsStateBuffer m_stateBuffer;  ///< Хранитель состояния UPS.
 

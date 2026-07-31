@@ -33,7 +33,7 @@ void UpsMonitor::init(const std::string& configPath) {
     const std::string ip{ "127.0.0.1" };
 
     // --- 2. создаём SNMP client ---
-    m_snmp = createSnmpClient(ip);
+    m_snmp = createSnmpClient(ip, 161);
 
     // --- 3. определяем модель UPS ---
     const std::string upsModelSpecFile{ utils::resolvePath("../config/ups_model_spec.ini") };
@@ -62,8 +62,9 @@ bool UpsMonitor::tryConsumeState(ups::UpsState& state) {
     return m_stateBuffer.tryConsumeState(state);
 }
 
-std::unique_ptr<snmp::ISnmpClient> UpsMonitor::createSnmpClient(const std::string& ip) {
-    return std::unique_ptr<snmp::ISnmpClient>(new snmp::SnmpClient(ip));
+std::unique_ptr<snmp::ISnmpClient> UpsMonitor::createSnmpClient(const std::string& ip,
+                                                               uint16_t port) {
+    return std::unique_ptr<snmp::ISnmpClient>(new snmp::SnmpClient(ip, port));
 }
 
 void UpsMonitor::pollLoop() {
