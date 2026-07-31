@@ -54,19 +54,9 @@ void UpsMonitor::init(const std::string& configPath) {
     m_thread = std::thread(&UpsMonitor::pollLoop, this);
 }
 
-void UpsMonitor::tryUpdateOwnState() {
-    ups::UpsState state;
-    if (!m_stateBuffer.tryConsumeState(state)) {
-        return;
-    }
-    applyState(state);
-}
-
 std::unique_ptr<snmp::ISnmpClient> UpsMonitor::createSnmpClient(const std::string& ip) {
     return std::unique_ptr<snmp::ISnmpClient>(new snmp::SnmpClient(ip));
 }
-
-void UpsMonitor::applyState(const ups::UpsState& state) {}
 
 void UpsMonitor::pollLoop() {
     const auto updatePeriod = std::chrono::milliseconds(1000);
@@ -80,10 +70,7 @@ void UpsMonitor::pollLoop() {
         // 2. Сохраняем состояние
         m_stateBuffer.storeState(state);
 
-        // 3. Применяем (обновляем Device)
-        tryUpdateOwnState();
-
-        // 4. sleep до следующего опроса, учитывая время выполнения текущего цикла
+        // 3. sleep до следующего опроса, учитывая время выполнения текущего цикла
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - t0);
 

@@ -17,10 +17,10 @@
 #include "ups_state_poller.h"
 
 /**
- * @brief Устройство UPS, обновляющее состояние питания по SNMP.
+ * @brief Монитор состояния UPS по SNMP.
  *
- * Класс управляет SNMP-клиентом, периодическим опросом UPS и передачей
- * агрегированного состояния в базовый Device.
+ * Класс управляет SNMP-клиентом, периодическим опросом UPS и хранением
+ * последнего агрегированного состояния.
  */
 class UpsMonitor {
 public:
@@ -46,11 +46,6 @@ public:
      */
     void init(const std::string& configPath);
 
-    /**
-     * @brief Применяет последнее доступное состояние к Device.
-     */
-    void tryUpdateOwnState();
-
 protected:
     /**
      * @brief Создаёт SNMP-клиент для указанного IP-адреса.
@@ -58,12 +53,6 @@ protected:
      * @return Экземпляр SNMP-клиента.
      */
     virtual std::unique_ptr<snmp::ISnmpClient> createSnmpClient(const std::string& ip);
-
-    /**
-     * @brief Применяет состояние UPS к Device.
-     * @param state Состояние UPS.
-     */
-    virtual void applyState(const ups::UpsState& state);
 
     ups::UpsStateBuffer m_stateBuffer;  ///< Хранитель состояния UPS.
 
