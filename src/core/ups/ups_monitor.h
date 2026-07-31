@@ -46,6 +46,13 @@ public:
      */
     void init(const std::string& configPath);
 
+    /**
+     * @brief Пытается получить последнее непотреблённое состояние UPS.
+     * @param state [out] Полученное состояние UPS.
+     * @return true, если новое состояние доступно.
+     */
+    bool tryConsumeState(ups::UpsState& state);
+
 protected:
     /**
      * @brief Создаёт SNMP-клиент для указанного IP-адреса.

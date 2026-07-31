@@ -54,6 +54,10 @@ void UpsMonitor::init(const std::string& configPath) {
     m_thread = std::thread(&UpsMonitor::pollLoop, this);
 }
 
+bool UpsMonitor::tryConsumeState(ups::UpsState& state) {
+    return m_stateBuffer.tryConsumeState(state);
+}
+
 std::unique_ptr<snmp::ISnmpClient> UpsMonitor::createSnmpClient(const std::string& ip) {
     return std::unique_ptr<snmp::ISnmpClient>(new snmp::SnmpClient(ip));
 }

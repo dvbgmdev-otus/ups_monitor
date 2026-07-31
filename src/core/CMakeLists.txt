@@ -23,6 +23,7 @@ if(${CORE_SRC})
     )
 
     target_link_libraries(${CORE_NAME} PRIVATE
+        ${SNMP_NAME}
         ${UTILS_NAME}
     )
 
