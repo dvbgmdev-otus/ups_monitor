@@ -13,6 +13,10 @@
 #include "ups_model_detector.h"
 
 UpsMonitor::~UpsMonitor() {
+    stop();
+}
+
+void UpsMonitor::stop() {
     m_running.store(false);
     if (m_thread.joinable()) {
         m_thread.join();

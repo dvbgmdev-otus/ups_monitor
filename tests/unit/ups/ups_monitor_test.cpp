@@ -61,3 +61,18 @@ TEST_F(UpsMonitorTest, TryConsumeState_StateAlreadyConsumed_ReturnsFalse) {
 }
 
 #endif
+
+#if (1)  // Part 4 — Остановка
+
+// Test 4.1: Остановка неинициализированного монитора не выбрасывает исключений
+TEST_F(UpsMonitorTest, Stop_NotInitialized_DoesNothing) {
+    EXPECT_NO_THROW(m_monitor.stop());
+}
+
+// Test 4.2: Повторная остановка монитора не выбрасывает исключений
+TEST_F(UpsMonitorTest, Stop_CalledTwice_DoesNothing) {
+    ASSERT_NO_THROW(m_monitor.stop());
+    EXPECT_NO_THROW(m_monitor.stop());
+}
+
+#endif

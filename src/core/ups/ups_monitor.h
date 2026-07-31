@@ -47,6 +47,11 @@ public:
     void init(const std::string& configPath);
 
     /**
+     * @brief Останавливает фоновый опрос UPS и ожидает завершения потока.
+     */
+    void stop();
+
+    /**
      * @brief Пытается получить последнее непотреблённое состояние UPS.
      * @param state [out] Полученное состояние UPS.
      * @return true, если новое состояние доступно.
