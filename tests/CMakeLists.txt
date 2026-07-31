@@ -117,6 +117,8 @@ add_unit_test(ups_monitor_test
         ${CORE_NAME}
 )
 
+add_dependencies(ups_monitor_test prepare_runtime_config)
+
 add_unit_test(snmp_ber_test
     SOURCES
         ${UNIT_TEST_DIR}/snmp/ber/encode_primitives_test.cpp

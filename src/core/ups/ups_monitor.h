@@ -41,11 +41,14 @@ public:
     UpsMonitor& operator=(UpsMonitor&&) = delete;
 
     /**
-     * @brief Инициализирует UPS по конфигурационному файлу и запускает опрос.
-     * @param configPath Путь к конфигурационному файлу.
+     * @brief Инициализирует монитор UPS и запускает фоновый опрос.
+     * @param ip IP-адрес UPS.
+     * @param port UDP-порт SNMP-агента.
+     * @param error [out] Текст ошибки инициализации.
+     * @return true при успешной инициализации.
      * @warning Повторный вызов после успешной инициализации запрещён.
      */
-    void init(const std::string& configPath);
+    bool init(const std::string& ip, uint16_t port, ups::ErrorMessage& error);
 
     /**
      * @brief Останавливает фоновый опрос UPS и ожидает завершения потока.
@@ -81,6 +84,7 @@ private:
 
     ups::UpsModelSpec m_modelSpec;         ///< Спецификация обнаруженной модели UPS.
     std::thread m_thread;                  ///< Рабочий поток опроса UPS.
+    bool m_initialized{ false };           ///< Признак успешной инициализации.
     std::atomic<bool> m_running{ false };  ///< Признак работы потока опроса.
 };
 

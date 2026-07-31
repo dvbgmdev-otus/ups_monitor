@@ -6,7 +6,7 @@
 #include "ups_monitor.h"
 
 #include <chrono>
-#include <stdexcept>
+#include <exception>
 
 #include "fs_utils.h"
 #include "snmp_client.h"
@@ -23,39 +23,50 @@ void UpsMonitor::stop() {
     }
 }
 
-void UpsMonitor::init(const std::string& configPath) {
+bool UpsMonitor::init(const std::string& ip, uint16_t port, ups::ErrorMessage& error) {
+    error.clear();
+
     // Защита от повторного init
-    if (m_running.load()) {
-        throw std::logic_error("UpsMonitor::init() called more than once");
+    if (m_initialized) {
+        error = "UPS monitor is already initialized";
+        return false;
     }
 
-    // --- 1. читаем конфиг с IP ---
-    const std::string ip{ "127.0.0.1" };
+    try {
+        // --- 2. создаём SNMP client ---
+        m_snmp = createSnmpClient(ip, port);
+        if (!m_snmp) {
+            error = "SNMP client creation failed";
+            return false;
+        }
 
-    // --- 2. создаём SNMP client ---
-    m_snmp = createSnmpClient(ip, 161);
+        // --- 3. определяем модель UPS ---
+        const std::string upsModelSpecFile{ utils::resolvePath("../config/ups_model_spec.ini") };
+        ups::IniSectionName model;
+        if (!ups::UpsModelDetector::detect(*m_snmp, upsModelSpecFile, model, error)) {
+            return false;
+        }
 
-    // --- 3. определяем модель UPS ---
-    const std::string upsModelSpecFile{ utils::resolvePath("../config/ups_model_spec.ini") };
-    std::string modelName;
-    ups::ErrorMessage err;
+        // --- 4. загружаем спецификацию модели ---
+        // UpsModelDetector вроде бы уже все проверил и следующая проверка не нужна
+        // но оставим на всякий случай
+        if (!m_modelSpec.load(upsModelSpecFile, model)) {
+            // LCOV_EXCL_START
+            error = m_modelSpec.lastError();
+            return false;
+            // LCOV_EXCL_STOP
+        }
 
-    if (!ups::UpsModelDetector::detect(*m_snmp, upsModelSpecFile, modelName, err)) {
-        throw std::runtime_error("UPS model detection failed: " + err);
+        // --- 5. фиксируем успешную инициализацию ---
+        m_running.store(true);
+        m_thread = std::thread(&UpsMonitor::pollLoop, this);
+        m_initialized = true;
+        return true;
+    } catch (const std::exception& exception) {
+        m_running.store(false);
+        error = exception.what();
+        return false;
     }
-
-    // --- 4. загружаем спецификацию модели ---
-    // UpsModelDetector вроде бы уже все проверил и следующая проверка не нужна
-    // но оставим на всякий случай
-    if (!m_modelSpec.load(upsModelSpecFile, modelName)) {
-        // LCOV_EXCL_START
-        throw std::runtime_error("UPS model spec load failed: " + m_modelSpec.lastError());
-        // LCOV_EXCL_STOP
-    }
-
-    // --- 5. фиксируем успешную инициализацию ---
-    m_running.store(true);
-    m_thread = std::thread(&UpsMonitor::pollLoop, this);
 }
 
 bool UpsMonitor::tryConsumeState(ups::UpsState& state) {
