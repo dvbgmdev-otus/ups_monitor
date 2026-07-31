@@ -5,7 +5,9 @@
 
 #include "ups_monitor.h"
 
+#include <chrono>
 #include <gtest/gtest.h>
+#include <thread>
 
 #include "fake_snmp_client.h"
 #include "ups_model_spec.h"
@@ -54,6 +56,17 @@ protected:
         value.type = snmp::codec::SnmpValue::Type::String;
         value.strValue = spec.modelName();
         m_monitor.prepareModelResponse(spec.modelNameOid(), value);
+    }
+
+    bool waitForState(ups::UpsState& state, std::chrono::milliseconds timeout) {
+        const auto deadline = std::chrono::steady_clock::now() + timeout;
+        while (std::chrono::steady_clock::now() < deadline) {
+            if (m_monitor.tryConsumeState(state)) {
+                return true;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        return m_monitor.tryConsumeState(state);
     }
 
     TestUpsMonitor m_monitor;
@@ -177,6 +190,35 @@ TEST_F(UpsMonitorTest, ModelName_AfterStop_ReturnsDetectedModelName) {
     ASSERT_TRUE(m_monitor.init("127.0.0.1", 161, error));
     m_monitor.stop();
     EXPECT_EQ(m_monitor.modelName(), "MP3000RT");
+}
+
+#endif
+
+#if (1)  // Part 7 — Фоновый опрос
+
+// Test 7.1: Первое состояние формируется без ожидания периода опроса
+TEST_F(UpsMonitorTest, Polling_FirstState_IsAvailableImmediately) {
+    prepareValidModelResponse();
+    ups::ErrorMessage error;
+    ASSERT_TRUE(m_monitor.init("127.0.0.1", 161, error));
+
+    ups::UpsState state;
+    EXPECT_TRUE(waitForState(state, std::chrono::milliseconds(500)));
+}
+
+// Test 7.2: Остановка прерывает ожидание следующего опроса
+TEST_F(UpsMonitorTest, Stop_WhileWaiting_CompletesBeforePollingPeriod) {
+    prepareValidModelResponse();
+    ups::ErrorMessage error;
+    ASSERT_TRUE(m_monitor.init("127.0.0.1", 161, error));
+    ups::UpsState state;
+    ASSERT_TRUE(waitForState(state, std::chrono::milliseconds(500)));
+
+    const auto started = std::chrono::steady_clock::now();
+    m_monitor.stop();
+    const auto elapsed = std::chrono::steady_clock::now() - started;
+
+    EXPECT_LT(elapsed, std::chrono::milliseconds(500));
 }
 
 #endif

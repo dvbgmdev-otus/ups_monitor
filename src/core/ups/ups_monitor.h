@@ -7,8 +7,10 @@
 #define UPS_MONITOR_H
 
 #include <atomic>
+#include <condition_variable>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 
@@ -90,6 +92,8 @@ private:
 
     ups::UpsModelSpec m_modelSpec;         ///< Спецификация обнаруженной модели UPS.
     std::thread m_thread;                  ///< Рабочий поток опроса UPS.
+    std::condition_variable m_waitCondition;  ///< Условие прерывания ожидания.
+    std::mutex m_waitMutex;                   ///< Мьютекс ожидания следующего опроса.
     bool m_initialized{ false };           ///< Признак успешной инициализации.
     std::atomic<bool> m_running{ false };  ///< Признак работы потока опроса.
 };

@@ -12,10 +12,17 @@
 #include "snmp_client.h"
 #include "ups_model_detector.h"
 
+namespace {
+
+constexpr std::chrono::seconds POLL_PERIOD{ 1 };
+
+}  // namespace
+
 UpsMonitor::~UpsMonitor() { stop(); }
 
 void UpsMonitor::stop() {
     m_running.store(false);
+    m_waitCondition.notify_all();
     if (m_thread.joinable()) {
         m_thread.join();
     }
@@ -79,8 +86,6 @@ std::unique_ptr<snmp::ISnmpClient> UpsMonitor::createSnmpClient(const std::strin
 }
 
 void UpsMonitor::pollLoop() {
-    const auto updatePeriod = std::chrono::milliseconds(1000);
-
     while (m_running.load()) {
         auto t0 = std::chrono::steady_clock::now();
 
@@ -90,12 +95,15 @@ void UpsMonitor::pollLoop() {
         // 2. Сохраняем состояние
         m_stateBuffer.storeState(state);
 
-        // 3. sleep до следующего опроса, учитывая время выполнения текущего цикла
+        // 3. Ожидание следующего опроса с учётом времени выполнения текущего цикла
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - t0);
 
-        if (elapsed < updatePeriod) {
-            std::this_thread::sleep_for(updatePeriod - elapsed);
+        if (elapsed < POLL_PERIOD) {
+            std::unique_lock<std::mutex> lock(m_waitMutex);
+            m_waitCondition.wait_for(lock, POLL_PERIOD - elapsed, [this] {
+                return !m_running.load();
+            });
         }
     }
 }
