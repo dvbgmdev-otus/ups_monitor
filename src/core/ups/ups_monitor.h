@@ -92,12 +92,12 @@ private:
 
     std::unique_ptr<snmp::ISnmpClient> m_snmp;  ///< SNMP-клиент для опроса ИБП.
 
-    ups::UpsModelSpec m_modelSpec;         ///< Спецификация обнаруженной модели ИБП.
-    std::thread m_thread;                  ///< Рабочий поток опроса ИБП.
+    ups::UpsModelSpec m_modelSpec;            ///< Спецификация обнаруженной модели ИБП.
+    std::thread m_thread;                     ///< Рабочий поток опроса ИБП.
     std::condition_variable m_waitCondition;  ///< Условие прерывания ожидания.
     std::mutex m_waitMutex;                   ///< Мьютекс ожидания следующего опроса.
-    bool m_initialized{ false };           ///< Признак успешной инициализации.
-    std::atomic<bool> m_running{ false };  ///< Признак работы потока опроса.
+    bool m_initialized{ false };              ///< Признак успешной инициализации.
+    std::atomic<bool> m_running{ false };     ///< Признак работы потока опроса.
 };
 
 #endif  // UPS_MONITOR_H
