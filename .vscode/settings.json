@@ -16,5 +16,9 @@
         "${workspaceFolder}/src/**",
         "${workspaceFolder}/tests/**",
         "${workspaceFolder}/build/_deps/googletest-src/googletest/include"
+    ],
+
+    "C_Cpp.default.defines": [
+        "UPS_EMULATOR_EXECUTABLE=\"${workspaceFolder}/build/bin/tests/ups_emulator/ups_emulator\""
     ]
 }
