@@ -14,9 +14,12 @@
 #include <string>
 #include <thread>
 
-#include "snmp_client_iface.h"
 #include "ups_model_spec.h"
 #include "ups_state_buffer.h"
+
+namespace snmp {
+class ISnmpClient;
+}
 
 /**
  * @brief Монитор состояния UPS по SNMP.
@@ -27,9 +30,9 @@
 class UpsMonitor {
 public:
     /**
-     * @brief Создаёт устройство питания UPS.
+     * @brief Создаёт монитор состояния UPS.
      */
-    UpsMonitor() = default;
+    UpsMonitor();
 
     /**
      * @brief Останавливает поток опроса UPS.

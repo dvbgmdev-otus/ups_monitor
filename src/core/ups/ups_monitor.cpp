@@ -19,6 +19,8 @@ constexpr std::chrono::seconds POLL_PERIOD{ 1 };
 
 }  // namespace
 
+UpsMonitor::UpsMonitor() = default;
+
 UpsMonitor::~UpsMonitor() { stop(); }
 
 void UpsMonitor::stop() {
