@@ -17,7 +17,6 @@
 #include "snmp_client_iface.h"
 #include "ups_model_spec.h"
 #include "ups_state_buffer.h"
-#include "ups_state_poller.h"
 
 /**
  * @brief Монитор состояния UPS по SNMP.
@@ -35,7 +34,7 @@ public:
     /**
      * @brief Останавливает поток опроса UPS.
      */
-    ~UpsMonitor();
+    virtual ~UpsMonitor();
 
     UpsMonitor(const UpsMonitor&) = delete;
     UpsMonitor& operator=(const UpsMonitor&) = delete;

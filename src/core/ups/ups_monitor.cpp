@@ -11,6 +11,7 @@
 #include "fs_utils.h"
 #include "snmp_client.h"
 #include "ups_model_detector.h"
+#include "ups_state_poller.h"
 
 namespace {
 
@@ -54,8 +55,8 @@ bool UpsMonitor::init(const std::string& ip, uint16_t port, ups::ErrorMessage& e
     }
 
     // --- 3. загружаем спецификацию модели ---
-    // UpsModelDetector вроде бы уже все проверил и следующая проверка не нужна
-    // но оставим на всякий случай
+    // Спецификация уже проверена при определении модели, но файл мог измениться
+    // перед её загрузкой в монитор.
     if (!m_modelSpec.load(upsModelSpecFile, model)) {
         // LCOV_EXCL_START
         error = m_modelSpec.lastError();
@@ -63,7 +64,7 @@ bool UpsMonitor::init(const std::string& ip, uint16_t port, ups::ErrorMessage& e
         // LCOV_EXCL_STOP
     }
 
-    // --- 4. фиксируем успешную инициализацию ---
+    // --- 4. запускаем фоновый опрос ---
     m_running.store(true);
     try {
         m_thread = std::thread(&UpsMonitor::pollLoop, this);
