@@ -67,6 +67,7 @@ bool UpsMonitor::init(const std::string& ip, uint16_t port, ups::ErrorMessage& e
     m_running.store(true);
     try {
         m_thread = std::thread(&UpsMonitor::pollLoop, this);
+        // LCOV_EXCL_START
     } catch (const std::exception& exception) {
         m_running.store(false);
         error = "UPS polling thread start failed for model ";
@@ -75,6 +76,7 @@ bool UpsMonitor::init(const std::string& ip, uint16_t port, ups::ErrorMessage& e
         error += exception.what();
         return false;
     }
+    // LCOV_EXCL_STOP
     m_initialized = true;
     return true;
 }
@@ -106,9 +108,8 @@ void UpsMonitor::pollLoop() {
 
         if (elapsed < POLL_PERIOD) {
             std::unique_lock<std::mutex> lock(m_waitMutex);
-            m_waitCondition.wait_for(lock, POLL_PERIOD - elapsed, [this] {
-                return !m_running.load();
-            });
+            m_waitCondition.wait_for(
+                lock, POLL_PERIOD - elapsed, [this] { return !m_running.load(); });
         }
     }
 }

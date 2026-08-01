@@ -29,6 +29,11 @@ protected:
 
         void throwOnClientCreation() { m_throwOnClientCreation = true; }
 
+        std::unique_ptr<snmp::ISnmpClient> createDefaultSnmpClient(const std::string& ip,
+                                                                   uint16_t port) {
+            return UpsMonitor::createSnmpClient(ip, port);
+        }
+
         const std::string& clientIp() const { return m_clientIp; }
         uint16_t clientPort() const { return m_clientPort; }
 
@@ -244,6 +249,17 @@ TEST_F(UpsMonitorTest, Polling_AfterPollingPeriod_ProducesNewState) {
     ups::UpsState secondState;
     EXPECT_FALSE(m_monitor.tryConsumeState(secondState));
     EXPECT_TRUE(waitForState(secondState, std::chrono::milliseconds(1500)));
+}
+
+#endif
+
+#if (1)  // Part 8 — Фабрика SNMP-клиента
+
+// Test 8.1: Стандартная фабрика создаёт SNMP-клиент
+TEST_F(UpsMonitorTest, CreateSnmpClient_ValidEndpoint_ReturnsClient) {
+    std::unique_ptr<snmp::ISnmpClient> client =
+        m_monitor.createDefaultSnmpClient("127.0.0.1", 161);
+    EXPECT_NE(client, nullptr);
 }
 
 #endif
