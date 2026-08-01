@@ -63,7 +63,7 @@ protected:
 
     void prepareValidModelResponse() {
         ups::UpsModelSpec spec;
-        ASSERT_TRUE(spec.load("../config/ups_model_spec.ini", "INELT_MP3000RT"));
+        ASSERT_TRUE(spec.load("config/ups_model_spec.ini", "INELT_MP3000RT"));
 
         snmp::codec::SnmpValue value;
         value.type = snmp::codec::SnmpValue::Type::String;

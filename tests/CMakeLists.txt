@@ -18,6 +18,12 @@ set(BIN_DIR "${CMAKE_BINARY_DIR}/bin")
 set(TEST_BIN_DIR "${BIN_DIR}/tests")
 message(STATUS "  Test binaries dir: ${TEST_BIN_DIR}")
 
+# --- Runtime-конфигурация для тестовых бинарников ---
+add_runtime_config(
+    prepare_test_runtime_config
+    "${TEST_BIN_DIR}"
+)
+
 # --- Подключение GoogleTest ---
 include(FetchContent)
 
@@ -117,7 +123,7 @@ add_unit_test(ups_monitor_test
         ${CORE_NAME}
 )
 
-add_dependencies(ups_monitor_test prepare_runtime_config)
+add_dependencies(ups_monitor_test prepare_test_runtime_config)
 
 add_unit_test(snmp_ber_test
     SOURCES

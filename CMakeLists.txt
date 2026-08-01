@@ -81,6 +81,11 @@ endif()
 
 if(1) # RUNTIME CONFIG BLOCK
     include(runtime_config)
+    add_runtime_config(
+        prepare_runtime_config
+        "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+    )
+    add_dependencies(${PROJECT_NAME} prepare_runtime_config)
 endif()
 
 if(1) # ACTIVATE BUILD TESTS BLOCK
