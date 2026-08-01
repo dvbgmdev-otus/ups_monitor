@@ -191,8 +191,8 @@ TEST_F(UpsMonitorTest, Init_ClientCreationThrows_ReturnsFalseWithContext) {
 
 #if (1)  // Part 6 — Имя модели
 
-// Test 6.1: До успешной инициализации имя модели пустое
-TEST_F(UpsMonitorTest, ModelName_NotInitialized_ReturnsEmptyString) {
+// Test 6.1: До определения модели её имя недоступно
+TEST_F(UpsMonitorTest, ModelName_ModelNotDetected_ReturnsEmptyString) {
     EXPECT_TRUE(m_monitor.modelName().empty());
 }
 
