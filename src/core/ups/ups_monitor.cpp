@@ -1,7 +1,7 @@
 /**
  * @file ups_monitor.cpp
  * @ingroup ups
- * @brief Реализация монитора UPS и фонового SNMP-опроса.
+ * @brief Реализация монитора ИБП и фонового SNMP-опроса.
  */
 #include "ups_monitor.h"
 
@@ -49,7 +49,7 @@ bool UpsMonitor::init(const std::string& ip, uint16_t port, ups::ErrorMessage& e
         return false;
     }
 
-    // --- 2. определяем модель UPS ---
+    // --- 2. определяем модель ИБП ---
     const std::string upsModelSpecFile{ utils::resolvePath("../config/ups_model_spec.ini") };
     ups::IniSectionName model;
     if (!ups::UpsModelDetector::detect(*m_snmp, upsModelSpecFile, model, error)) {
@@ -99,7 +99,7 @@ void UpsMonitor::pollLoop() {
     while (m_running.load()) {
         auto t0 = std::chrono::steady_clock::now();
 
-        // 1. Один реальный опрос UPS
+        // 1. Один реальный опрос ИБП
         ups::UpsState state = ups::UpsStatePoller::poll(m_modelSpec, *m_snmp);
 
         // 2. Сохраняем состояние

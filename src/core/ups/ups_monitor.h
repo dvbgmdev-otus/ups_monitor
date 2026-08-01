@@ -1,7 +1,7 @@
 /**
  * @file ups_monitor.h
  * @ingroup ups
- * @brief Мониторинг состояния UPS.
+ * @brief Мониторинг состояния ИБП.
  */
 #ifndef UPS_MONITOR_H
 #define UPS_MONITOR_H
@@ -22,20 +22,20 @@ class ISnmpClient;
 }
 
 /**
- * @brief Монитор состояния UPS по SNMP.
+ * @brief Монитор состояния ИБП по SNMP.
  *
- * Класс управляет SNMP-клиентом, периодическим опросом UPS и хранением
+ * Класс управляет SNMP-клиентом, периодическим опросом ИБП и хранением
  * последнего агрегированного состояния.
  */
 class UpsMonitor {
 public:
     /**
-     * @brief Создаёт монитор состояния UPS.
+     * @brief Создаёт монитор состояния ИБП.
      */
     UpsMonitor();
 
     /**
-     * @brief Останавливает поток опроса UPS.
+     * @brief Останавливает поток опроса ИБП.
      */
     virtual ~UpsMonitor();
 
@@ -45,8 +45,8 @@ public:
     UpsMonitor& operator=(UpsMonitor&&) = delete;
 
     /**
-     * @brief Инициализирует монитор UPS и запускает фоновый опрос.
-     * @param ip IP-адрес UPS.
+     * @brief Инициализирует монитор ИБП и запускает фоновый опрос.
+     * @param ip IP-адрес ИБП.
      * @param port UDP-порт SNMP-агента.
      * @param error [out] Текст ошибки инициализации.
      * @return true при успешной инициализации.
@@ -55,19 +55,19 @@ public:
     bool init(const std::string& ip, uint16_t port, ups::ErrorMessage& error);
 
     /**
-     * @brief Останавливает фоновый опрос UPS и ожидает завершения потока.
+     * @brief Останавливает фоновый опрос ИБП и ожидает завершения потока.
      */
     void stop();
 
     /**
-     * @brief Пытается получить последнее непотреблённое состояние UPS.
-     * @param state [out] Полученное состояние UPS.
+     * @brief Пытается получить последнее непотреблённое состояние ИБП.
+     * @param state [out] Полученное состояние ИБП.
      * @return true, если новое состояние доступно.
      */
     bool tryConsumeState(ups::UpsState& state);
 
     /**
-     * @brief Возвращает имя обнаруженной модели UPS.
+     * @brief Возвращает имя обнаруженной модели ИБП.
      * @return Имя модели или пустая строка, если модель ещё не определена.
      */
     const std::string& modelName() const;
@@ -75,25 +75,25 @@ public:
 protected:
     /**
      * @brief Создаёт SNMP-клиент для указанного IP-адреса.
-     * @param ip IP-адрес UPS.
+     * @param ip IP-адрес ИБП.
      * @param port UDP-порт SNMP-агента.
      * @return Экземпляр SNMP-клиента.
      */
     virtual std::unique_ptr<snmp::ISnmpClient> createSnmpClient(const std::string& ip,
                                                                 uint16_t port);
 
-    ups::UpsStateBuffer m_stateBuffer;  ///< Хранитель состояния UPS.
+    ups::UpsStateBuffer m_stateBuffer;  ///< Хранитель состояния ИБП.
 
 private:
     /**
-     * @brief Выполняет периодический опрос UPS в рабочем потоке.
+     * @brief Выполняет периодический опрос ИБП в рабочем потоке.
      */
     void pollLoop();
 
-    std::unique_ptr<snmp::ISnmpClient> m_snmp;  ///< SNMP-клиент для опроса UPS.
+    std::unique_ptr<snmp::ISnmpClient> m_snmp;  ///< SNMP-клиент для опроса ИБП.
 
-    ups::UpsModelSpec m_modelSpec;         ///< Спецификация обнаруженной модели UPS.
-    std::thread m_thread;                  ///< Рабочий поток опроса UPS.
+    ups::UpsModelSpec m_modelSpec;         ///< Спецификация обнаруженной модели ИБП.
+    std::thread m_thread;                  ///< Рабочий поток опроса ИБП.
     std::condition_variable m_waitCondition;  ///< Условие прерывания ожидания.
     std::mutex m_waitMutex;                   ///< Мьютекс ожидания следующего опроса.
     bool m_initialized{ false };           ///< Признак успешной инициализации.
