@@ -16,6 +16,7 @@
 namespace {
 
 constexpr std::chrono::seconds POLL_PERIOD{ 1 };
+constexpr const char* UPS_MODEL_SPEC_PATH = "config/ups_model_spec.ini";
 
 }  // namespace
 
@@ -50,7 +51,7 @@ bool UpsMonitor::init(const std::string& ip, uint16_t port, ups::ErrorMessage& e
     }
 
     // --- 2. определяем модель ИБП ---
-    const std::string upsModelSpecFile{ utils::resolvePath("../config/ups_model_spec.ini") };
+    const std::string upsModelSpecFile{ utils::resolvePath(UPS_MODEL_SPEC_PATH) };
     ups::IniSectionName model;
     if (!ups::UpsModelDetector::detect(*m_snmp, upsModelSpecFile, model, error)) {
         return false;
