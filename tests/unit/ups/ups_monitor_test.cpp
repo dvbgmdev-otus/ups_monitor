@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <stdexcept>
 #include <thread>
 
 #include "fake_snmp_client.h"
@@ -26,6 +27,8 @@ protected:
             m_hasModelResponse = true;
         }
 
+        void throwOnClientCreation() { m_throwOnClientCreation = true; }
+
         const std::string& clientIp() const { return m_clientIp; }
         uint16_t clientPort() const { return m_clientPort; }
 
@@ -34,6 +37,9 @@ protected:
                                                             uint16_t port) override {
             m_clientIp = ip;
             m_clientPort = port;
+            if (m_throwOnClientCreation) {
+                throw std::runtime_error("test error");
+            }
             std::unique_ptr<test::FakeSnmpClient> client(new test::FakeSnmpClient());
             if (m_hasModelResponse) {
                 client->set(m_modelOid, { true, m_modelValue, "" });
@@ -45,6 +51,7 @@ protected:
         std::string m_clientIp;
         uint16_t m_clientPort{ 0 };
         bool m_hasModelResponse{ false };
+        bool m_throwOnClientCreation{ false };
         snmp::Oid m_modelOid;
         snmp::codec::SnmpValue m_modelValue;
     };
@@ -165,6 +172,14 @@ TEST_F(UpsMonitorTest, Init_AfterFailedInit_CanSucceed) {
     prepareValidModelResponse();
     EXPECT_TRUE(m_monitor.init("127.0.0.1", 161, error));
     EXPECT_TRUE(error.empty());
+}
+
+// Test 5.5: Исключение фабрики возвращается с контекстом создания SNMP-клиента
+TEST_F(UpsMonitorTest, Init_ClientCreationThrows_ReturnsFalseWithContext) {
+    m_monitor.throwOnClientCreation();
+    ups::ErrorMessage error;
+    EXPECT_FALSE(m_monitor.init("127.0.0.1", 161, error));
+    EXPECT_EQ(error, "SNMP client creation failed: test error");
 }
 
 #endif
