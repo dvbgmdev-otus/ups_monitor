@@ -40,7 +40,7 @@ bool UpsMonitor::init(const std::string& ip, uint16_t port, ups::ErrorMessage& e
         return false;
     }
 
-    // --- 1. создаём SNMP client ---
+    // --- 1. создаём SNMP-клиент ---
     try {
         m_snmp = createSnmpClient(ip, port);
     } catch (const std::exception& exception) {
@@ -97,7 +97,7 @@ std::unique_ptr<snmp::ISnmpClient> UpsMonitor::createSnmpClient(const std::strin
 
 void UpsMonitor::pollLoop() {
     while (m_running.load()) {
-        auto t0 = std::chrono::steady_clock::now();
+        const auto t0 = std::chrono::steady_clock::now();
 
         // 1. Один реальный опрос ИБП
         ups::UpsState state = ups::UpsStatePoller::poll(m_modelSpec, *m_snmp);
@@ -106,7 +106,7 @@ void UpsMonitor::pollLoop() {
         m_stateBuffer.storeState(state);
 
         // 3. Ожидание следующего опроса с учётом времени выполнения текущего цикла
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - t0);
 
         if (elapsed < POLL_PERIOD) {
