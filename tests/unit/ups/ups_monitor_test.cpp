@@ -5,8 +5,9 @@
 
 #include "ups_monitor.h"
 
-#include <chrono>
 #include <gtest/gtest.h>
+
+#include <chrono>
 #include <thread>
 
 #include "fake_snmp_client.h"
@@ -201,7 +202,6 @@ TEST_F(UpsMonitorTest, Polling_FirstState_IsAvailableImmediately) {
     prepareValidModelResponse();
     ups::ErrorMessage error;
     ASSERT_TRUE(m_monitor.init("127.0.0.1", 161, error));
-
     ups::UpsState state;
     EXPECT_TRUE(waitForState(state, std::chrono::milliseconds(500)));
 }
@@ -213,12 +213,22 @@ TEST_F(UpsMonitorTest, Stop_WhileWaiting_CompletesBeforePollingPeriod) {
     ASSERT_TRUE(m_monitor.init("127.0.0.1", 161, error));
     ups::UpsState state;
     ASSERT_TRUE(waitForState(state, std::chrono::milliseconds(500)));
-
     const auto started = std::chrono::steady_clock::now();
     m_monitor.stop();
     const auto elapsed = std::chrono::steady_clock::now() - started;
-
     EXPECT_LT(elapsed, std::chrono::milliseconds(500));
+}
+
+// Test 7.3: После периода опроса формируется новое состояние
+TEST_F(UpsMonitorTest, Polling_AfterPollingPeriod_ProducesNewState) {
+    prepareValidModelResponse();
+    ups::ErrorMessage error;
+    ASSERT_TRUE(m_monitor.init("127.0.0.1", 161, error));
+    ups::UpsState firstState;
+    ASSERT_TRUE(waitForState(firstState, std::chrono::milliseconds(500)));
+    ups::UpsState secondState;
+    EXPECT_FALSE(m_monitor.tryConsumeState(secondState));
+    EXPECT_TRUE(waitForState(secondState, std::chrono::milliseconds(1500)));
 }
 
 #endif
