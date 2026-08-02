@@ -34,12 +34,19 @@ main() {
     fi
 
     local output
-    output="$("$BINARY")"
+    output="$("$BINARY" --help)"
 
     local expected
-    expected="Application started"
+    expected="Usage:
+  $BINARY [--ip <IPv4>] [--port <number>]
+  $BINARY --help
 
-    check_output "full program output" "$expected" "$output"
+Options:
+  --ip <IPv4>    UPS IPv4 address (default: 127.0.0.1)
+  --port <number> SNMP UDP port, 1..65535 (default: 161)
+  --help         Show this help and exit"
+
+    check_output "help output" "$expected" "$output"
 
     log_ok "Self-check passed"
 }
