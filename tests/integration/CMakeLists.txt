@@ -19,6 +19,7 @@ add_integration_test(snmp_client_integration_test
 add_integration_test(ups_monitor_integration_test
     SOURCES
         ups_monitor_integration_test.cpp
+        snmp_ready_waiter.cpp
         ups_emulator_process.cpp
     LIBRARIES
         ${CORE_NAME}

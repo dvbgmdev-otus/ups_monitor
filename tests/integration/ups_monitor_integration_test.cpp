@@ -8,6 +8,8 @@
 #include <memory>
 #include <thread>
 
+#include "snmp_client.h"
+#include "snmp_ready_waiter.h"
 #include "ups_emulator_process.h"
 #include "ups_model_types.h"
 #include "ups_monitor.h"
@@ -22,6 +24,9 @@ const char* const EMULATOR_MODEL = "APC_RT_2000_XL";
 const char* const EMULATOR_HOST = "127.0.0.1";
 const uint16_t EMULATOR_PORT = 1161;
 const char* const EXPECTED_MODEL_NAME = "Smart-UPS RT 2000 XL";
+const snmp::Oid MODEL_NAME_OID = "1.3.6.1.4.1.318.1.1.1.1.1.1.0";
+const unsigned int READY_ATTEMPTS = 3;
+const std::chrono::milliseconds READY_RETRY_INTERVAL(100);
 const std::chrono::seconds STATE_TIMEOUT(3);
 const std::chrono::milliseconds STATE_RETRY_INTERVAL(20);
 const std::chrono::milliseconds STOP_TIMEOUT(500);
@@ -31,6 +36,12 @@ protected:
     void SetUp() override {
         m_emulator.reset(
             new UpsEmulatorProcess(UPS_EMULATOR_EXECUTABLE, EMULATOR_MODEL, EMULATOR_PORT));
+
+        snmp::SnmpClient client(EMULATOR_HOST, EMULATOR_PORT);
+        snmp::ErrorMessage error;
+        ASSERT_TRUE(waitUntilSnmpReady(
+            client, MODEL_NAME_OID, READY_ATTEMPTS, READY_RETRY_INTERVAL, &error))
+            << error;
     }
 
     void TearDown() override { m_monitor.stop(); }
