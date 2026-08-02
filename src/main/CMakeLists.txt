@@ -5,6 +5,7 @@
 
 add_executable(${PROJECT_NAME}
     main.cpp
+    cli_options.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

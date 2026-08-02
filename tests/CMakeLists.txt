@@ -45,6 +45,12 @@ add_unit_test(empty_test SOURCES
     ${UNIT_TEST_DIR}/empty_test.cpp
 )
 
+add_unit_test(cli_options_test
+    SOURCES
+        ${UNIT_TEST_DIR}/main/cli_options_test.cpp
+        ${SRC_DIR}/main/cli_options.cpp
+)
+
 add_unit_test(fs_utils_test
     SOURCES
         ${UNIT_TEST_DIR}/utils/fs_utils_test.cpp
