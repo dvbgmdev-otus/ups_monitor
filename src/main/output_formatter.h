@@ -8,7 +8,9 @@
 #include <chrono>
 #include <string>
 
-#include "ups_model_types.h"
+namespace ups {
+struct UpsState;
+}
 
 namespace output {
 

@@ -4,9 +4,12 @@
  */
 #include "output_formatter.h"
 
+#include <cstdint>
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+
+#include "ups_model_types.h"
 
 namespace {
 

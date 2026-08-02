@@ -11,6 +11,8 @@
 #include <ctime>
 #include <string>
 
+#include "ups_model_types.h"
+
 namespace {
 
 output::Timestamp makeLocalTimestamp(
