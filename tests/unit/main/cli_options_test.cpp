@@ -64,10 +64,20 @@ TEST(CliOptionsTest, Help_OnlyArgument_RequestsHelp) {
 TEST(CliOptionsTest, HelpText_ExecutableName_ContainsUsageAndOptions) {
     const std::string help = cli::makeHelp("monitor");
     EXPECT_NE(help.find("monitor [--ip <IPv4>] [--port <number>]"), std::string::npos);
-    EXPECT_NE(help.find("--help"), std::string::npos);
+    EXPECT_NE(help.find("monitor --help"), std::string::npos);
+    EXPECT_NE(help.find("UPS IPv4 address (default: 127.0.0.1)"), std::string::npos);
+    EXPECT_NE(help.find("SNMP UDP port, 1..65535 (default: 161)"), std::string::npos);
+    EXPECT_NE(help.find("--help         Show this help and exit"), std::string::npos);
 }
 
-// Test 3.3: Справку нельзя сочетать с другими параметрами
+// Test 3.3: Для пустого имени исполняемого файла используется имя по умолчанию
+TEST(CliOptionsTest, HelpText_EmptyExecutableName_UsesDefaultName) {
+    const std::string help = cli::makeHelp("");
+    EXPECT_NE(help.find("ups_monitor [--ip <IPv4>] [--port <number>]"), std::string::npos);
+    EXPECT_NE(help.find("ups_monitor --help"), std::string::npos);
+}
+
+// Test 3.4: Справку нельзя сочетать с другими параметрами
 TEST(CliOptionsTest, Help_WithOtherArgument_ReturnsError) {
     const cli::ParseResult result = parse({ "ups_monitor", "--help", "--port", "161" });
     EXPECT_FALSE(result.ok());
