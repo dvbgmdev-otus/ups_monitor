@@ -131,13 +131,14 @@ ParseResult parseArguments(int argc, const char* const argv[]) {
 
 std::string makeHelp(const std::string& executableName) {
     const std::string name = executableName.empty() ? "ups_monitor" : executableName;
+    const Options defaults;
     std::ostringstream help;
     help << "Usage:\n"
          << "  " << name << " [--ip <IPv4>] [--port <number>]\n"
          << "  " << name << " --help\n\n"
          << "Options:\n"
-         << "  --ip <IPv4>    UPS IPv4 address (default: 127.0.0.1)\n"
-         << "  --port <number> SNMP UDP port, 1..65535 (default: 161)\n"
+         << "  --ip <IPv4>    UPS IPv4 address (default: " << defaults.ip << ")\n"
+         << "  --port <number> SNMP UDP port, 1..65535 (default: " << defaults.port << ")\n"
          << "  --help         Show this help and exit\n";
     return help.str();
 }
