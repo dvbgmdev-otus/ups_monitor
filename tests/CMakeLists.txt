@@ -51,6 +51,14 @@ add_unit_test(cli_options_test
         ${SRC_DIR}/main/cli_options.cpp
 )
 
+add_unit_test(output_formatter_test
+    SOURCES
+        ${UNIT_TEST_DIR}/main/output_formatter_test.cpp
+        ${SRC_DIR}/main/output_formatter.cpp
+    LIBRARIES
+        ${CORE_NAME}
+)
+
 add_unit_test(fs_utils_test
     SOURCES
         ${UNIT_TEST_DIR}/utils/fs_utils_test.cpp

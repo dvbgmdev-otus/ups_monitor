@@ -6,6 +6,7 @@
 add_executable(${PROJECT_NAME}
     main.cpp
     cli_options.cpp
+    output_formatter.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
