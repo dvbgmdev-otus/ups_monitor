@@ -1,124 +1,74 @@
 # @file tests/cmake/add_test.cmake
-# ===== Функция добавления unit-тестов =====
-function(add_unit_test TEST_NAME)
-    # Функция принимает именованные секции:
-    #   SOURCES   - список исходных файлов теста
-    #   LIBRARIES - дополнительные библиотеки для линковки
-    set(options)
-    set(oneValueArgs)
-    set(multiValueArgs SOURCES LIBRARIES)
 
-    # Разбираем аргументы вызова в переменные UNIT_TEST_SOURCES
-    # и UNIT_TEST_LIBRARIES.
-    cmake_parse_arguments(UNIT_TEST
+# ===== Внутренняя функция добавления GTest-target =====
+function(_add_gtest_target TEST_NAME)
+    # Булевы опции helper не принимает.
+    set(options)
+
+    # Эти именованные аргументы принимают по одному значению.
+    set(oneValueArgs
+        INCLUDE_DIR
+        LABEL
+        RESOURCE_LOCK
+        TIMEOUT
+    )
+
+    # Эти именованные аргументы принимают списки значений.
+    set(multiValueArgs
+        SOURCES
+        LIBRARIES
+        DEFINITIONS
+        DEPENDENCIES
+        COMMON_REQUIRED_FILES
+        REQUIRED_FILES
+    )
+
+    # Разбираем все общие аргументы unit- и интеграционных тестов
+    # в переменные с префиксом TEST_.
+    cmake_parse_arguments(TEST
         "${options}"
         "${oneValueArgs}"
         "${multiValueArgs}"
         ${ARGN}
     )
 
-    # Тест без исходных файлов собрать нельзя, поэтому это ошибка
-    # конфигурации, а не значение по умолчанию.
-    if(NOT UNIT_TEST_SOURCES)
-        message(FATAL_ERROR "add_unit_test(${TEST_NAME}): SOURCES is required")
+    # Тест без исходных файлов собрать нельзя, поэтому отсутствие SOURCES
+    # является ошибкой конфигурации.
+    if(NOT TEST_SOURCES)
+        message(FATAL_ERROR "Test ${TEST_NAME}: SOURCES is required")
     endif()
 
-    # Большинство unit-тестов проверяет core, поэтому используем его
-    # как зависимость по умолчанию. Особые тесты могут передать LIBRARIES.
-    if(NOT UNIT_TEST_LIBRARIES)
-        set(UNIT_TEST_LIBRARIES ${CORE_NAME})
+    # Каждый тест должен явно определить каталог вспомогательных заголовков.
+    if(NOT TEST_INCLUDE_DIR)
+        message(FATAL_ERROR "Test ${TEST_NAME}: INCLUDE_DIR is required")
     endif()
 
-    # Создаём отдельный исполняемый файл unit-теста.
+    # Большинство тестов проверяет core, поэтому используем его как зависимость
+    # по умолчанию. Особые тесты могут передать LIBRARIES.
+    if(NOT TEST_LIBRARIES)
+        set(TEST_LIBRARIES ${CORE_NAME})
+    endif()
+
+    # Создаём отдельный исполняемый файл теста.
     add_executable(${TEST_NAME}
-        ${UNIT_TEST_SOURCES}
+        ${TEST_SOURCES}
     )
 
-    # Общие fixture и вспомогательные файлы unit-тестов подключаются
-    # относительно корневого каталога tests/unit.
+    # Подключаем fixture и вспомогательные заголовки теста.
     target_include_directories(${TEST_NAME} PRIVATE
-        ${UNIT_TEST_DIR}
+        ${TEST_INCLUDE_DIR}
     )
+
+    # Передаём необязательные определения препроцессора.
+    if(TEST_DEFINITIONS)
+        target_compile_definitions(${TEST_NAME} PRIVATE
+            ${TEST_DEFINITIONS}
+        )
+    endif()
 
     # Подключаем проверяемые библиотеки и точку входа GoogleTest.
     target_link_libraries(${TEST_NAME} PRIVATE
-        ${UNIT_TEST_LIBRARIES}
-        GTest::gtest_main
-    )
-
-    # Все тестовые бинарники размещаются в общем runtime-каталоге тестов.
-    set_target_properties(${TEST_NAME} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${TEST_BIN_DIR}
-    )
-
-    # Общие настройки компиляции и линковки держим в одном месте:
-    # warnings, coverage flags, debug definitions.
-    configure_compile_target(${TEST_NAME})
-    configure_link_target(${TEST_NAME})
-
-    # Регистрируем найденные GoogleTest-сценарии как тесты CTest.
-    gtest_discover_tests(${TEST_NAME})
-
-endfunction()
-
-# ===== Функция добавления интеграционных тестов =====
-function(add_integration_test TEST_NAME)
-    # Функция принимает именованные секции:
-    #   SOURCES        - список исходных файлов теста
-    #   LIBRARIES      - дополнительные библиотеки для линковки
-    #   DEPENDENCIES   - зависимости CMake-target
-    #   REQUIRED_FILES - дополнительные runtime-файлы теста
-    set(options)
-    set(oneValueArgs)
-    set(multiValueArgs SOURCES LIBRARIES DEPENDENCIES REQUIRED_FILES)
-
-    # Разбираем аргументы вызова в переменные INTEGRATION_TEST_SOURCES,
-    # INTEGRATION_TEST_LIBRARIES, INTEGRATION_TEST_DEPENDENCIES и
-    # INTEGRATION_TEST_REQUIRED_FILES.
-    cmake_parse_arguments(INTEGRATION_TEST
-        "${options}"
-        "${oneValueArgs}"
-        "${multiValueArgs}"
-        ${ARGN}
-    )
-
-    # Интеграционный тест без исходных файлов собрать нельзя, поэтому
-    # отсутствие SOURCES является ошибкой конфигурации.
-    if(NOT INTEGRATION_TEST_SOURCES)
-        message(FATAL_ERROR "add_integration_test(${TEST_NAME}): SOURCES is required")
-    endif()
-
-    # Все интеграционные тесты используют подготовленный runtime UPS Emulator.
-    # Путь должен быть задан вызывающим tests/integration/CMakeLists.txt.
-    if(NOT UPS_EMULATOR_PATH)
-        message(FATAL_ERROR "add_integration_test(${TEST_NAME}): UPS_EMULATOR_PATH is required")
-    endif()
-
-    # Большинство интеграционных тестов проверяет core, поэтому используем его
-    # как зависимость по умолчанию. Особые тесты могут передать LIBRARIES.
-    if(NOT INTEGRATION_TEST_LIBRARIES)
-        set(INTEGRATION_TEST_LIBRARIES ${CORE_NAME})
-    endif()
-
-    # Создаём отдельный исполняемый файл интеграционного теста.
-    add_executable(${TEST_NAME}
-        ${INTEGRATION_TEST_SOURCES}
-    )
-
-    # Вспомогательные файлы интеграционных тестов подключаются относительно
-    # каталога, из которого вызвана функция.
-    target_include_directories(${TEST_NAME} PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-    )
-
-    # Передаём C++-коду абсолютный путь к исполняемому файлу эмулятора.
-    target_compile_definitions(${TEST_NAME} PRIVATE
-        UPS_EMULATOR_EXECUTABLE="${UPS_EMULATOR_PATH}"
-    )
-
-    # Подключаем проверяемые библиотеки и точку входа GoogleTest.
-    target_link_libraries(${TEST_NAME} PRIVATE
-        ${INTEGRATION_TEST_LIBRARIES}
+        ${TEST_LIBRARIES}
         GTest::gtest_main
     )
 
@@ -128,10 +78,9 @@ function(add_integration_test TEST_NAME)
     )
 
     # Дополнительные CMake-target должны быть подготовлены до сборки теста.
-    # Например, эта зависимость используется для runtime-конфигурации монитора.
-    if(INTEGRATION_TEST_DEPENDENCIES)
+    if(TEST_DEPENDENCIES)
         add_dependencies(${TEST_NAME}
-            ${INTEGRATION_TEST_DEPENDENCIES}
+            ${TEST_DEPENDENCIES}
         )
     endif()
 
@@ -140,21 +89,63 @@ function(add_integration_test TEST_NAME)
     configure_compile_target(${TEST_NAME})
     configure_link_target(${TEST_NAME})
 
-    # Эмулятор обязателен для каждого интеграционного теста. Конкретный тест
-    # может добавить собственные runtime-файлы через REQUIRED_FILES.
+    # Объединяем обязательные файлы вида тестов и конкретного сценария.
     set(required_files
-        "${UPS_EMULATOR_PATH}"
-        ${INTEGRATION_TEST_REQUIRED_FILES}
+        ${TEST_COMMON_REQUIRED_FILES}
+        ${TEST_REQUIRED_FILES}
     )
 
-    # Регистрируем найденные GoogleTest-сценарии как интеграционные тесты CTest.
-    # Общая блокировка запрещает одновременно занимать UDP-порт эмулятора,
-    # а timeout завершает зависший тест.
-    gtest_discover_tests(${TEST_NAME}
-        PROPERTIES
-            LABELS integration
-            REQUIRED_FILES "${required_files}"
-            RESOURCE_LOCK snmp_emulator_port_1161
-            TIMEOUT 15
+    # Регистрируем найденные GoogleTest-сценарии как тесты CTest.
+    # Расширенные свойства добавляются только когда они были переданы.
+    if(TEST_LABEL OR required_files OR TEST_RESOURCE_LOCK OR TEST_TIMEOUT)
+        gtest_discover_tests(${TEST_NAME}
+            PROPERTIES
+                LABELS "${TEST_LABEL}"
+                REQUIRED_FILES "${required_files}"
+                RESOURCE_LOCK "${TEST_RESOURCE_LOCK}"
+                TIMEOUT "${TEST_TIMEOUT}"
+        )
+    else()
+        gtest_discover_tests(${TEST_NAME})
+    endif()
+endfunction()
+
+# ===== Функция добавления unit-тестов =====
+function(add_unit_test TEST_NAME)
+    # Unit-тесты используют общий каталог fixture и вспомогательных заголовков.
+    # Остальные аргументы без повторного разбора передаются общему helper.
+    _add_gtest_target(${TEST_NAME}
+        INCLUDE_DIR
+            "${UNIT_TEST_DIR}"
+        ${ARGN}
+    )
+endfunction()
+
+# ===== Функция добавления интеграционных тестов =====
+function(add_integration_test TEST_NAME)
+    # Все интеграционные тесты используют подготовленный runtime UPS Emulator.
+    # Путь должен быть задан вызывающим tests/integration/CMakeLists.txt.
+    if(NOT UPS_EMULATOR_PATH)
+        message(FATAL_ERROR
+            "add_integration_test(${TEST_NAME}): UPS_EMULATOR_PATH is required"
+        )
+    endif()
+
+    # Интеграционные тесты получают общие настройки эмулятора и CTest.
+    # Аргументы конкретного теста без повторного разбора передаются helper.
+    _add_gtest_target(${TEST_NAME}
+        INCLUDE_DIR
+            "${CMAKE_CURRENT_SOURCE_DIR}"
+        DEFINITIONS
+            UPS_EMULATOR_EXECUTABLE="${UPS_EMULATOR_PATH}"
+        COMMON_REQUIRED_FILES
+            "${UPS_EMULATOR_PATH}"
+        LABEL
+            integration
+        RESOURCE_LOCK
+            snmp_emulator_port_1161
+        TIMEOUT
+            15
+        ${ARGN}
     )
 endfunction()
