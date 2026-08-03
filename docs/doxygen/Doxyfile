@@ -993,8 +993,8 @@ WARN_LOGFILE           =
 
 INPUT                  = mainpage.dox \
                          groups.dox \
-                         ../README.md \
-                         ../src \
+                         ../../README.md \
+                         ../../src \
                          namespaces.dox
 
 # This tag can be used to specify the character encoding of the source files
