@@ -1,0 +1,24 @@
+{
+    "cmake.generator": "Unix Makefiles",
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.configureOnOpen": false,
+    "cmake.sourceDirectory": "${workspaceFolder}",
+
+    "cmake.configureSettings": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+    },
+
+    "cmake.buildArgs": [
+        "-j"
+    ],
+
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/src/**",
+        "${workspaceFolder}/tests/**",
+        "${workspaceFolder}/build/_deps/googletest-src/googletest/include"
+    ],
+
+    "C_Cpp.default.defines": [
+        "UPS_EMULATOR_EXECUTABLE=\"${workspaceFolder}/build/bin/tests/ups_emulator/ups_emulator\""
+    ]
+}
