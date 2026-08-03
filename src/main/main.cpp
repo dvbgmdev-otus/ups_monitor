@@ -1,6 +1,7 @@
 #include <chrono>
 #include <csignal>
 #include <iostream>
+#include <string>
 #include <thread>
 
 #include "cli_options.h"
@@ -9,7 +10,7 @@
 
 namespace {
 
-constexpr std::chrono::milliseconds STATE_CHECK_INTERVAL{ 20 };
+constexpr std::chrono::milliseconds STATE_CHECK_INTERVAL{ 50 };
 
 volatile std::sig_atomic_t stopRequested = 0;
 
