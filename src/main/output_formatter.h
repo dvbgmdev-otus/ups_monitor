@@ -14,6 +14,9 @@ struct UpsState;
 
 namespace output {
 
+/**
+ * @brief Момент времени, используемый при формировании пользовательского вывода.
+ */
 using Timestamp = std::chrono::system_clock::time_point;
 
 /**

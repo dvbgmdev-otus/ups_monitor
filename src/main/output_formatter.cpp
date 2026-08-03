@@ -15,6 +15,11 @@
 
 namespace {
 
+/**
+ * @brief Форматирует момент времени в локальном часовом поясе.
+ * @param timestamp Форматируемый момент времени.
+ * @return Дата и время в формате `YYYY-MM-DD HH:MM:SS`.
+ */
 std::string formatLocalTime(const output::Timestamp& timestamp) {
     const std::time_t time = std::chrono::system_clock::to_time_t(timestamp);
     std::tm localTime{};
@@ -25,6 +30,11 @@ std::string formatLocalTime(const output::Timestamp& timestamp) {
     return buffer;
 }
 
+/**
+ * @brief Форматирует установленные флаги отклонений ИБП.
+ * @param deviations Битовая маска отклонений.
+ * @return Имена установленных флагов, разделённые символом `|`, либо `NONE`.
+ */
 std::string formatDeviationFlags(ups::UpsDeviationFlags deviations) {
     if (deviations == ups::UpsDeviationFlags::NONE) {
         return "NONE";
