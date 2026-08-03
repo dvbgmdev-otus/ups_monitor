@@ -51,7 +51,7 @@ TEST_F(OutputFormatterTest, FormatDetectedModel_ValidModel_ReturnsExactMessage) 
 TEST_F(OutputFormatterTest, FormatState_OkWithoutDeviations_ReturnsExactMessage) {
     const ups::UpsState state{ ups::UpsStatus::OK, ups::UpsDeviationFlags::NONE };
     EXPECT_EQ(output::formatState(state, m_timestamp),
-              "2026-07-15 14:25:43 [UPS] status=OK deviations=0x00000000");
+              "2026-07-15 14:25:43 [UPS] status=OK deviations=0x00000000 (NONE)");
 }
 
 // Test 2.2: Предупреждение выводится с объединённой маской отклонений
@@ -60,21 +60,22 @@ TEST_F(OutputFormatterTest, FormatState_WarningWithDeviations_ReturnsExactMessag
                                ups::UpsDeviationFlags::CHARGE_ALERT |
                                    ups::UpsDeviationFlags::BYPASS_ALERT };
     EXPECT_EQ(output::formatState(state, m_timestamp),
-              "2026-07-15 14:25:43 [UPS] status=WARNING deviations=0x00000042");
+              "2026-07-15 14:25:43 [UPS] status=WARNING deviations=0x00000042 (CHARGE_ALERT | "
+              "BYPASS_ALERT)");
 }
 
 // Test 2.3: Аварийное состояние выводится с восьмизначной маской
 TEST_F(OutputFormatterTest, FormatState_FailureWithDeviation_ReturnsExactMessage) {
     const ups::UpsState state{ ups::UpsStatus::FAILURE, ups::UpsDeviationFlags::OUTPUT_FAILURE };
     EXPECT_EQ(output::formatState(state, m_timestamp),
-              "2026-07-15 14:25:43 [UPS] status=FAILURE deviations=0x00000020");
+              "2026-07-15 14:25:43 [UPS] status=FAILURE deviations=0x00000020 (OUTPUT_FAILURE)");
 }
 
 // Test 2.4: Отсутствие информации выводится как самостоятельное состояние
 TEST_F(OutputFormatterTest, FormatState_NoInfo_ReturnsExactMessage) {
     const ups::UpsState state{ ups::UpsStatus::NO_INFO, ups::UpsDeviationFlags::NONE };
     EXPECT_EQ(output::formatState(state, m_timestamp),
-              "2026-07-15 14:25:43 [UPS] status=NO_INFO deviations=0x00000000");
+              "2026-07-15 14:25:43 [UPS] status=NO_INFO deviations=0x00000000 (NONE)");
 }
 
 // Test 2.5: Шестнадцатеричные цифры маски выводятся в верхнем регистре
@@ -84,7 +85,8 @@ TEST_F(OutputFormatterTest, FormatState_MaskContainsHexLetters_ReturnsUppercaseD
         ups::UpsDeviationFlags::OUTPUT_FAILURE | ups::UpsDeviationFlags::BYPASS_ALERT;
     const ups::UpsState state{ ups::UpsStatus::WARNING, deviations };
     EXPECT_EQ(output::formatState(state, m_timestamp),
-              "2026-07-15 14:25:43 [UPS] status=WARNING deviations=0x0000006A");
+              "2026-07-15 14:25:43 [UPS] status=WARNING deviations=0x0000006A (CHARGE_ALERT | "
+              "FREQ_ALERT | OUTPUT_FAILURE | BYPASS_ALERT)");
 }
 
 #endif
