@@ -14,18 +14,23 @@ namespace cli {
  * @brief Параметры запуска приложения.
  */
 struct Options {
-    std::string ip{ "127.0.0.1" };
-    uint16_t port{ 161 };
-    bool helpRequested{ false };
+    std::string ip{ "127.0.0.1" };  ///< IPv4-адрес ИБП.
+    uint16_t port{ 161 };           ///< UDP-порт SNMP-агента.
+    bool helpRequested{ false };    ///< Признак запроса справки.
 };
 
 /**
  * @brief Результат разбора аргументов командной строки.
  */
 struct ParseResult {
-    Options options;
-    std::string error;
+    Options options;    ///< Разобранные параметры запуска.
+    std::string error;  ///< Описание ошибки разбора или пустая строка при успехе.
 
+    /**
+     * @brief Проверяет успешность разбора аргументов.
+     * @return true, если аргументы разобраны без ошибок.
+     * @return false, если поле error содержит описание ошибки.
+     */
     bool ok() const noexcept { return error.empty(); }
 };
 
