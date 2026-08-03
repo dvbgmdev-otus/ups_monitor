@@ -36,8 +36,9 @@ entity "ИБП" as Ups
 == 4. Определение модели ИБП ==
 
 note right of Monitor
-    modelsFilePath — путь к ups_model_spec.ini,
-    заданный константой приложения
+    Путь config/ups_model_spec.ini
+    разрешается относительно каталога
+    исполняемого файла
 end note
 
 Monitor -> ModelsDb: Прочитать список секций
@@ -70,14 +71,14 @@ loop Пока модель не определена и есть секции
 end
 
 break Модель не определена
-    Monitor --> CLI: Исключение с причиной ошибки
+    Monitor --> CLI: false, описание ошибки
     CLI --> User: Сообщение об ошибке в stderr
     CLI --> User: Завершение с кодом 1
 end
 
 == 5. Загрузка спецификации модели ==
 
-Monitor -> ModelSpec: load(modelsFilePath,\ndetectedModel)
+Monitor -> ModelSpec: load(upsModelSpecFile,\ndetectedModel)
 activate ModelSpec
 ModelSpec -> ModelsDb: Прочитать секцию\ndetectedModel
 ModelsDb --> ModelSpec: Данные секции
@@ -87,7 +88,7 @@ ModelSpec --> Monitor: Результат загрузки
 deactivate ModelSpec
 
 break Спецификация не загружена
-    Monitor --> CLI: Исключение с причиной ошибки
+    Monitor --> CLI: false, описание ошибки
     CLI --> User: Сообщение об ошибке в stderr
     CLI --> User: Завершение с кодом 1
 end
@@ -100,11 +101,10 @@ ModelSpec --> Monitor: modelName
 deactivate ModelSpec
 
 Monitor ->> Monitor: Запустить pollLoop()
-Monitor --> CLI: Инициализация завершена\nmodelName
+Monitor --> CLI: Инициализация завершена
 deactivate Monitor
 
 CLI --> User: Определена модель ИБП:\nmodelName
-CLI --> User: Мониторинг запущен
 
 == 7. Периодический опрос ИБП ==
 
@@ -165,6 +165,6 @@ end
 
 deactivate Monitor
 
-CLI --> User: Приложение завершено
+CLI --> User: Завершение с кодом 0
 deactivate CLI
 @enduml
