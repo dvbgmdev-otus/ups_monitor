@@ -6,7 +6,7 @@ participant "Пользователь SNMP-клиента" as User
 == 1. Создание SNMP-клиента ==
 
 create control "client : SnmpClient" as Client
-User -> Client: SnmpClient(host, port, community)
+User -> Client: SnmpClient(host, port, community, version)
 activate Client
 Client -> Client: Сохранить параметры подключения
 deactivate Client
@@ -51,10 +51,10 @@ Network --> Client: Пакет ответа
 Client -> Codec: decodeGetResponse(пакет, request-id)
 activate Codec
 Codec -> Codec: Декодировать и проверить ответ
-Codec --> Client: Значения OID
+Codec --> Client: Значение OID
 deactivate Codec
 
-break Ошибка выполнения GET-запроса
+break Ошибка на любом из этапов GET-запроса
     Client --> User: false, описание ошибки
 end
 
