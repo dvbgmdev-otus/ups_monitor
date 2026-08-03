@@ -16,12 +16,10 @@
 
 namespace snmp {
 
-using namespace codec;
-
 SnmpClient::SnmpClient(const std::string& host,
                        uint16_t port,
                        const std::string& community,
-                       SnmpVersion version)
+                       codec::SnmpVersion version)
     : m_community(community), m_version(version) {
     std::memset(&m_addr, 0, sizeof(m_addr));
     m_addr.sin_family = AF_INET;
@@ -67,8 +65,8 @@ void SnmpClient::closeSocket() {
     }
 }
 
-bool SnmpClient::get(const Oid& oid, SnmpValue& out, ErrorMessage* err) {
-    std::vector<SnmpValue> values;
+bool SnmpClient::get(const Oid& oid, codec::SnmpValue& out, ErrorMessage* err) {
+    std::vector<codec::SnmpValue> values;
     if (!get(std::vector<Oid>{ oid }, values, err)) return false;
 
     if (values.empty()) {
@@ -81,7 +79,7 @@ bool SnmpClient::get(const Oid& oid, SnmpValue& out, ErrorMessage* err) {
 }
 
 bool SnmpClient::get(const std::vector<Oid>& oids,
-                     std::vector<SnmpValue>& out,
+                     std::vector<codec::SnmpValue>& out,
                      ErrorMessage* err) {
     ErrorMessage localErr;
 
@@ -92,14 +90,14 @@ bool SnmpClient::get(const std::vector<Oid>& oids,
 
     int requestId = m_requestId;
 
-    SnmpGetRequest getRequest;
+    codec::SnmpGetRequest getRequest;
     getRequest.requestId = requestId;
     getRequest.version = m_version;
     getRequest.community = m_community;
     getRequest.oids = oids;
 
     std::vector<uint8_t> request;
-    SnmpCodec::encodeGetRequest(getRequest, request);
+    codec::SnmpCodec::encodeGetRequest(getRequest, request);
 
     ssize_t sent = sendto(m_sock,
                           request.data(),
@@ -123,7 +121,8 @@ bool SnmpClient::get(const std::vector<Oid>& oids,
         return false;
     }
 
-    if (!SnmpCodec::decodeGetResponse(buffer, received, requestId, m_version, out, localErr)) {
+    if (!codec::SnmpCodec::decodeGetResponse(
+            buffer, received, requestId, m_version, out, localErr)) {
         if (err) *err = localErr;
         return false;
     }
